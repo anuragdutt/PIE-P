@@ -1,0 +1,8 @@
+Accurate energy prediction enables developers to make energy-aware decisions when selecting LLMs and deployment configurations. To this end, we present \sys{}, a prediction framework that addresses a key gap in accurately prediction the energy of LLMs during parallelized inference. By decomposing the model into its compute and communication modules, designing an accurate inter-GPU communication model, and formulating the prediction problem using a multi-level regressor, PIE-P significantly reduces prediction error across models, hardware platforms, and  three  popular parallelization strategies.
+%and demonstrate the utility of the prediction framework for a Pareto-style trade-off analyses for energy-efficient model selection using predicted energies.   
+
+% We acknowledge that \sys{} is hardware-dependent, and one of our immediate next steps is to bridge this hardware dependency gap.
+% %so that \sys{} becomes hardware-agnostic, further increasing its practical applicability across diverse deployment scenarios. 
+% Through our experiments, we have found hardware-agnostic energy prediction for LLMs to be a challenging task, warranting a full project in itself.
+% \sys{} currently supports only decoder-style transformer models. 
+% Extending it to encoder-based or encoder-decoder models is left for future work. This is challenging because encoder and encoder-decoder models often have bidirectional attention patterns and different execution flows, which affect both the structure of the model tree and the communication patterns. %Similarly, pipeline and data parallelism introduce distinct synchronization and scheduling behaviors that require new abstractions and measurement strategies.

@@ -1,0 +1,14 @@
+Our experimental results show that \sys{} generalizes across models and can accurately predict the energy consumption of parallelized inference on different hardware. One limitation in terms of the hardware is that we need to train \sys{} for each hardware as GPU capabilities and architecture can differ significantly. We note that, on the other hand, we do {\em not} have to train a new \sys{} predictor for each model. Our immediate next steps is to bridge this gap so that \sys{} becomes hardware-agnostic, further increasing its practical applicability across diverse deployment scenarios. Through our experiments, we have found hardware-agnostic energy prediction for LLMs to be a challenging task, warranting a full project in itself.
+\sys{} currently supports only decoder-style transformer models. %Extending it to encoder-based or encoder-decoder models is left for future work. 
+Encoder and encoder-decoder models often have bidirectional attention patterns and different execution flows, which affect both the structure of the model tree and the communication patterns. We believe that our parallelization-aware decomposition and communication modeling can be extended to encoder and encoder-decoder models; but we leave this extension for future work. Finally, in this work we show the effectiveness of \sys{} prediction under three popular parallelization strategies. Our next research steps will include extending the prediction to combinations of parallelism strategies such as 3D parallelism as well as other strategies including expert parallelism.
+
+
+\begin{comment}
+\begin{itemize}
+    \item only one type of model: vicuna
+    \item only focused on tensor parallelism, not pipeline parallel
+    \item parallel, not distributed
+    \item requires many experiments to collect significant sample size for wait times
+    \item can we call out some further opportunities to improve MAPE, especially for AllReduce?
+\end{itemize}
+\end{comment}

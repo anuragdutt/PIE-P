@@ -1,0 +1,110 @@
+%!TEX root = conference_101719.tex
+
+
+%Scaling model capacity has vastly improved instruction following~\cite{zhang2023instruction}, tool use~\cite{qin2023toolllm}, and reasoning abilities~\cite{xu2025largereasoningmodelssurvey} in many 
+
+The staggering energy costs of both inference and training with large language models has made energy a growing concern in NLP~\cite{strubell19,fernandez-etal-2025-energy,huang2026eop}, Machine Learning~\cite{Jesse-dodge-icml,ICLR2025_8e016430}, and systems research~\cite{wilkins2024offlineenergyoptimalllmserving}. 
+%Large Language Models~\footnote{In this work, we consider LLMs to be models with billions of parameters.} (LLMs) are incurring staggering energy costs for both inference and training. 
+Recent estimates show that energy consumption for LLM inference alone accounts for 80--90\% of total energy consumption in data centers~\cite{Wenjen_2024}. Model developers and service providers today have a design space that spans models of various sizes, optimizations, and parallelization options with a wide-ranging energy costs. A key deployment question is how to make energy-efficient choices from this vast design space.
+
+
+%%, and the inference energy is projected to grow to 1,050 terawatt-hours by 2026~\cite{kakolyris2024sloawaregpufrequencyscaling}. 
+
+%Large Language Models~\footnote{In this work, we consider LLMs to be models with billions of parameters.} (LLMs) 
+%including Llama, Olmo, GPT4, and Claude have vastly improved a wide variety of tasks including instruction following~\cite{zhang2023instruction}, tool use~\cite{qin2023toolllm}, and reasoning abilities~\cite{xu2025largereasoningmodelssurvey}. However, these  
+%\emph{increase in compute and energy costs}.
+%Coupled with the widespread adoption and deployments for web scale queries\footnote{OpenAI services have hit a billion queries per day as of April 2025~\cite{chatgpt-stats}.}, these advances also raise \be{LLM inference energy} to staggering levels. 
+%Recent estimates show that energy consumption for LLM inference can account for 80--90\% of total energy consumption in certain data centers~\cite{Wenjen_2024}, and the inference energy alone is projected to grow to 1,050 terawatt-hours by 2026~\cite{kakolyris2024sloawaregpufrequencyscaling}.
+
+
+%Consequently, model developers and service providers increasingly need to make energy-aware choices, since even a small change in design choice can result is substantial increase in energy cost. 
+
+The main bottleneck is that service providers do not have the tools to easily characterize the LLM energy consumption of their LLM serving configuration. A natural approach is to measure inference energy directly using full-system hardware energy monitors~\cite{anthony2020carbontrackertrackingpredictingcarbon, energyVis, mauricio, benoit_courty_2024_11171501}. However, in multi-tenant data centers, hardware power monitors are either not available %since they require inline meters and administrative privileges 
+or even if available, require exclusive machine access. 
+
+Energy prediction offers a promising alternative to direct measurement and prior work has made progress in predicting the energy consumption of LLM inference~\cite{strubell19,Nguyen-hotcarbon,wilkins2024offlineenergyoptimalllmserving,irene,Jesse-dodge-icml,codecarbon}. However, all of these approaches assume that LLMs are served on a \emph{single GPU}. In practice, modern LLMs routinely employ parallel inference over multiple GPUs~\cite{sangjin23_envpipe,megatron}.
+
+The \be{communication overheads introduced by multi-GPU execution fundamentally alter the energy profile}, making existing prediction models inaccurate (see \S\ref{s:challenges}). As a consequence, developers lack practical tools for answering crucial deployment questions, such as: should the model be parallelized across 2- or 4- GPUs for energy efficiency? Would pipeline or tensor parallelism provide better energy savings for a given model?
+
+\noindent In this work, we present \textbf{Parallelized Inference Energy Predictor (\sys{})}, an accurate energy prediction framework for multi-GPU LLM inference that generalizes across model architectures. 
+%\anshul{clarify whether PIE-P generalizes across model architectures, h/w, or both.}
+\sys{} is designed to support energy-efficient parallelization decisions across data, pipeline, and tensor parallelism.
+Beyond predicting the energy consumption of the entire model, \sys{} also estimates the energy of individual modules, enabling developers to identify energy bottlenecks during inference. 
+
+To obtain accurate energy predictions in parallel inference deployments, 
+\sys{} needs to keep track both parallel communication and computation which are both independently challenging. Parallel inference incurs substantial energy from inter-GPU communication and transfers (see \S\ref{s:challenges}),
+which are absent in single-GPU settings and can account for a large fraction of end-to-end energy (see Figure~\ref{fig:all_reduce_energy}). 
+%%In addition, multi-GPU execution introduces run-to-run variability from stragglers and synchronization (see \S\ref{}), creating non-deterministic energy consumption.
+In terms of computation, energy depends how each module in the model is executed on the GPU. % which in-turn depends on the tensor shape and hardware/resource characteristics
+In a multi-GPU setting, one has to account for how the modules are distributed across GPUs based on the parallelization strategy.
+
+
+
+
+\begin{comment}
+\begin{itemize}[leftmargin=*,itemsep=0pt]
+\item \textbf{Communication energy.}
+Parallel inference incurs substantial energy from inter-GPU collectives and transfers (see \S\ref{}),
+which are absent in single-GPU settings and can account for a large fraction of end-to-end energy (see Figure~\ref{fig:all_reduce_energy}).
+Ignoring this component leads to systematic underestimation of energy.
+
+\item \textbf{Non-deterministic synchronization.}
+Multi-GPU execution introduces run-to-run variability from stragglers and synchronization (see \S\ref{}), creating non-deterministic energy consumption. This
+variability makes both measurement and prediction more challenging.
+%variability makes both measurement (separating transfer vs.\ waiting) and prediction (capturing the distribution of synchronization energy rather than a single trace).}
+\anshul{do we address this?}
+\end{itemize}
+\end{comment}
+
+To address these challenges,
+\sys{} directly captures the fine-grained energy use of compute and communication. % and accounts for non-determinism.
+Specifically, we adopt the \emph{model-tree abstraction} (similar to existing approaches such as IrEne~\cite{irene, neuralpower}) to decompose the model energy into individual constituents. But different from existing decomposition techniques, \sys{} uses a \be{parallelism-aware model decomposition} that takes into account both (i) how the modules are distributed across the GPUs and (ii) adds inter-GPU communication events as individual modules in the model-tree abstraction.
+%
+
+To learn the energy use of these communication modules across different parallelisms, \sys{} identifies \emph{structural model features}, such as number of attention heads, to capture the relationship between model architecture and communication patterns.
+% To account for parallelization-induced synchronization overheads, \sys{} \be{models inter-GPU collective latency} as a function of fixed communication latency, effective bandwidth, and the bytes sent/received.
+% At runtime, \sys{} then employs this model to predict communication time and estimate the corresponding energy contribution for communication.
+%
+\sys{} \be{models communication energy} as calibrated communication power times predicted latency, which is parameterized by effective bandwidth and per-GPU communication volume.
+The resulting communication-module estimates are then composed with compute-module estimates through a multi-level regressor to produce the final end-to-end energy prediction.
+% \sys{} \be{models inter-GPU communication latency} as a function of the communication latency, effective bandwidth, and the bytes sent/received.
+%The predicted communication latency is then used as part of the communication-module feature set, and
+% \sys{} then composes the resulting communication-module estimates with compute-module estimates through a multi-level regressor to produce the final end-to-end energy prediction.
+
+%To enable scalable energy predictions, \sys{} employs \emph{aggregate feature representation} to concisely track the features of multiple GPUs
+%based on aggregates of their runtime features. 
+
+\begin{comment}
+To address these challenges,
+\sys{} (i) introduces a \be{parallelism-aware model decomposition} that directly captures the fine-grained energy use of compute and communication (including collectives such as AllReduce), including accounting for non-determinism; and (ii) combines these components by building a \be{hierarchical, module-level regression model} to produce accurate end-to-end energy predictions for any parallelism configuration. 
+
+As a first step, \sys{} adopts a \emph{model-tree} abstraction for energy prediction (similar to existing approaches such as IrEne~\cite{irene, neuralpower}). 
+However, \sys{} goes beyond the single-GPU setting considered in these prior works. % and specifically overcomes the challenges in predicting energy consumption for parallel inference. 
+To this end, \sys{} makes the following contributions: 
+\begin{enumerate}
+    \item 
+\emph{Communication Energy Profiling} by treating inter-GPU communication events as individual modules in the model-tree abstraction and learning their energy use via benchmarking.
+    \item \emph{Use of Structural Model Features}, such as number of attention heads, to capture the relationship between model architecture and communication patterns when using different parallelisms.
+    \item \review{\emph{Communication-Aware Prediction} to account for parallelization-induced communication overheads by modeling inter-GPU collective latency as a function of fixed communication latency, effective bandwidth, and the bytes sent/received, and using the predicted communication time to estimate the corresponding AllReduce energy contribution.}
+    \item \emph{Aggregate Runtime Feature Representation} to scalably and concisely represent the features of multiple GPUs
+    based on aggregates of their runtime features. 
+\end{enumerate}
+\aruna{(For Anshul) There is some repetition between this set of contributions and the previous paragraph. I wonder if we can combine the two in any way.}
+\end{comment}
+
+% We implement \sys{} to predict the energy consumption on a variety of open LLM  families (Vicuna, Mistral, Llama, and Qwen) of varying sizes (from 1B to 70B \aruna{check}), on three different hardware (\aruna{name the hardware}) and three different parallelization strategies.   
+
+We implement \sys{} to predict energy consumption across open LLM families
+(Vicuna, Mistral, Llama, and Qwen), 
+%with model sizes ranging from 7B to 70B parameters, 
+on three GPU platforms (A6000, B40, H200), and across
+%\youngwon{we mention which hardware and which models in Section 5 as well} We evaluate \sys{} across 
+tensor, pipeline, and data
+parallelism. % with tensor parallelism serving as the primary evaluation setting
+%because it introduces the most challenging communication and synchronization overheads.
+Our results demonstrate that \sys{} consistently achieves low model-level energy prediction error under tensor parallelism ($\sim$11.8\%), pipeline parallelism ($\sim$12.2\%), and data parallelism ($\sim$10.8\%).
+
+We compare \sys{} against existing prediction frameworks, CodeCarbon~\cite{codecarbon},  Wilkins et al.~\cite{wilkins2024offlineenergyoptimalllmserving}, and IrEne~\cite{irene}, as well as using NVML~\cite{nvml}, a popular energy software-based energy measurement tool. 
+%\anurag{I still have to do this. The numbers for pipeline and data parallelism are not the same in the graph as I have in the experiments. I need to recreate the graphs again. Tensor Parallelism values are correct.}
+Compared to the next-best performing baseline, \sys{} typically reduces energy prediction error by 1.5--3$\times$. We show that \sys{} generalizes to unseen models and accurately predicts module-level energy consumption, and we conduct ablation studies to analyze its behavior.
+We end with a use case that shows how \sys{} can help navigate the trade-off between inference time and energy consumption across different model sizes and GPU configurations. We commit to releasing all code and data upon publication.

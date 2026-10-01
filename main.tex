@@ -1,0 +1,178 @@
+\documentclass[conference]{IEEEtran}
+
+% Needed only if you use \thanks{} for funding information.
+% Otherwise this line can be removed.
+\IEEEoverridecommandlockouts
+
+% =========================================================
+% IEEE / standard packages
+% =========================================================
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage[table]{xcolor}
+\usepackage{url}
+
+% =========================================================
+% Packages used by the current PIE-P paper
+% =========================================================
+\usepackage{comment}
+\usepackage{wrapfig}
+\usepackage{subfigure}
+\usepackage{float}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[normalem]{ulem}
+\usepackage{stfloats}
+
+% Load hyperref near the end of the package list.
+% ACL loads hyperlink support automatically; IEEEtran does not.
+\usepackage[hidelinks]{hyperref}
+
+% =========================================================
+% Colors
+% =========================================================
+\definecolor{rowblue}{RGB}{231,243,255}
+
+% =========================================================
+% Custom macros
+% =========================================================
+\newcommand{\sys}{PIE-P}
+
+% =========================================================
+% Review / author-comment macros
+% Remove these comments for the final camera-ready version.
+% =========================================================
+\newcommand\be[1]{\textbf{\emph{#1}}}
+\newcommand\todo[1]{{\color{brown}{(#1)}}}
+\newcommand\review[1]{{\color{blue}{#1}}}
+\newcommand\anshul[1]{{\color{violet}{[Anshul: #1]}}}
+\newcommand\anurag[1]{{\color{red}{[Anurag: #1]}}}
+\newcommand\niranjan[1]{{\color{green}{[Niranjan: #1]}}}
+\newcommand\aruna[1]{{\color{orange}{Aruna: #1}}}
+\newcommand\arunacomment[1]{{\color{red}{[Aruna: #1]}}}
+\newcommand\youngwon[1]{{\color{purple}{[YoungWon: #1]}}}
+\newcommand{\strike}[1]{\sout{#1}}
+
+% =========================================================
+% BibTeX logo -- included in the official IEEE template
+% =========================================================
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+% =========================================================
+% Document
+% =========================================================
+\begin{document}
+
+\title{Energy Prediction for Parallelized LLM Inference}
+
+% =========================================================
+% Authors
+%
+% Replace this block with the actual author information for
+% the final version.
+%
+% If the conference is double-blind, follow that conference's
+% anonymization instructions instead.
+% =========================================================
+% \author{
+% \IEEEauthorblockN{First Author}
+% \IEEEauthorblockA{
+% \textit{Department of Computer Science} \\
+% \textit{Stony Brook University} \\
+% Stony Brook, NY, USA \\
+% email@stonybrook.edu
+% }
+% \and
+% \IEEEauthorblockN{Second Author}
+% \IEEEauthorblockA{
+% \textit{Department of Computer Science} \\
+% \textit{Stony Brook University} \\
+% Stony Brook, NY, USA \\
+% email@stonybrook.edu
+% }
+% }
+\author{Anonymous Authors}
+
+\maketitle
+
+% =========================================================
+% Abstract
+% =========================================================
+\begin{abstract}
+Large Language Models (LLMs) are widely deployed for inference, making their
+energy consumption an increasingly important practical issue. However, there
+are no tools available for practitioners to easily compare the energy use of
+different deployment configurations.
+Directly measuring the energy of an LLM model is often impractical and
+existing software measurement tools are inaccurate.
+While energy prediction is a promising approach, existing prediction
+algorithms only work for single-GPU settings, limiting their use in modern
+parallel inference systems where inter-GPU communication and distributed
+multi-GPU computation contribute significantly to energy overheads.
+This paper presents Parallelized Inference Energy-Predictor (\sys{}), a
+fine-grained energy prediction framework designed for multi-GPU inference
+across tensor, pipeline, and data parallelism.
+\sys{}'s scalable prediction approach captures multi-GPU energy overheads by
+explicitly modeling inter-GPU communication and accounting for compute
+parallelization.
+Experimental results on several LLM families across three hardware platforms
+demonstrate that \sys{} provides accurate, fine-grained energy estimates and
+significantly outperforms existing baselines.
+\end{abstract}
+
+% =========================================================
+% IEEE Keywords
+% =========================================================
+\begin{IEEEkeywords}
+large language models, LLM inference, energy prediction, multi-GPU inference,
+tensor parallelism, pipeline parallelism, data parallelism
+\end{IEEEkeywords}
+
+% =========================================================
+% Main paper
+% =========================================================
+\section{Introduction}
+\label{s:introduction}
+\input{introduction.tex}
+
+\section{Related Work}
+\label{s:related}
+\input{related_work.tex}
+
+\section{Background and Challenges}
+\label{s:challenges}
+\input{challenges.tex}
+
+\section{Design of \sys{}}
+\label{s:piep}
+\input{PieP.tex}
+
+\section{Evaluation}
+\label{s:evaluation}
+\input{prediction-eval.tex}
+
+\section{Conclusion}
+\label{s:conclusion}
+\input{conclusions.tex}
+
+\section{Limitations}
+\label{s:limitations}
+\input{limitations.tex}
+
+% =========================================================
+% References
+% =========================================================
+\bibliographystyle{IEEEtran}
+\bibliography{custom}
+
+% =========================================================
+% Appendix
+% =========================================================
+\appendix
+\input{appendix.tex}
+
+\end{document}

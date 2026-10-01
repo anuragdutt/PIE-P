@@ -1,0 +1,299 @@
+\begin{figure*}[!ht]
+    \centering
+    \includegraphics[width=\textwidth]{figures/mape_all_model_families.pdf}
+    \vspace{-24pt}
+    \caption{MAPE results across model families for \sys{} and the baselines under tensor parallelism on A6000.}
+    \label{fig:mape_comparison}
+    \vspace{-9pt}
+\end{figure*}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/b40_mape_tensor_parallelism_with_codecarbon.pdf}
+\vspace{-24pt}
+\caption{MAPE results across model families for \sys{} and the baselines under tensor parallelism on B40.}
+\label{fig:b40_mape_tensor_parallelism}
+\vspace{-18pt}
+\end{figure*}
+Our evaluation demonstrates \sys{}'s effectiveness across four LLM model families across varying sizes (7B--70B): Vicuna, Mistral, Llama, and Qwen~\cite{vicuna, jiang2023mistral7b, touvron2023llama, qwen}. 
+%%%(Vicuna, Mistral, Llama, and Qwen), \strike{
+We experiment on three different hardware that use different communication modes (NVLink and PCIe)
+% (\aruna{enumerate hardware}) 
+across the three widely-employed parallelization strategies (tensor, pipeline, and data),  focusing on tensor parallelism which is the most challenging case. %We compare \sys{} with four state-of-the-art baselines. 
+% We first discuss the prediction results when using tensor parallelism on different hardware in \S\ref{sec:model_prediction}. % because that is the most challenging case. 
+% Results for pipeline parallelism and data parallelism are discussed in \S\ref{sec:ppdp}. We discuss ablation experiments in \S\ref{sec:ablation_comm_modeling}--\ref{sec:ablation}. We end in \S\ref{sec:usecase} with a use case highlighting the applicability of \sys{} in practical settings.
+
+
+
+\subsection{Evaluation Methodology}
+\label{ss:esetup}
+%Our experiments are conducted on three different hardware: 
+% (1) a server with an AMD EPYC Milan 7543P processor (32 cores) and four NVIDIA RTX A6000 GPUs (48GB GDDR6, PCIe 4.0);
+% (2) ;
+% (3) .
+We conducted experiments on three hardware platforms:
+(1) NVIDIA RTX A6000;
+(2) NVIDIA B40; and
+(3) NVIDIA H200.
+Platform (1) uses an AMD EPYC Milan 7543P 32-core CPU with four A6000 GPUs over PCIe 4.0. Platforms (2) and (3) use an Intel Xeon 6 6530P 32-core CPU with PCIe 4.0 for B40 and NVLink-connected GPUs for H200.
+Ground-truth system power/energy is measured using  external Watts Up Pro  monitor (platform~1) and IPMI/BMC power readings (platforms 2,3). 
+%%%We compute ground-truth energy by integrating system power over the inference interval.
+% \anurag{Ground-truth system power/energy is measured with an external power monitor (Watts Up Pro) and whatever we use for Milan - IPMI.}
+% \anurag{Mention the network interconnect}
+
+%\smallskip\noindent\textbf{Models.}
+
+\smallskip\noindent\textbf{Baselines.} We compare \sys{} against the following (further implementation details in Appendix~\ref{app:baselines}): \\
+\noindent\textbf{\be{IrEne}~\cite{irene}:} A hierarchical energy prediction framework for single-GPU execution, representing the closest methodological baseline;
+\textbf{\be{CodeCarbon}~\cite{codecarbon}:} a state-of-the-art software-based energy/\(\mathrm{CO_2}\) estimator;
+\textbf{\be{Wilkins et al.}~\cite{wilkins2024offlineenergyoptimalllmserving}:} per-request energy prediction using prompt/output lengths as input;
+\textbf{\be{NVML}~\cite{nvml}:} measures GPU power draw in software and is commonly used~\cite{strubell19,luccioni2022estimatingcarbonfootprintbloom,Jesse-dodge-icml} for energy prediction due to ease of use. 
+%%%We separately compare with NVML in Appendix~\ref{app:nvml_proxy}. \aruna{where is this? I dont see it}
+%\anshul{explain the implementation, is it simple LR using NVML or multiple LR using NVML and other (which?) features?}
+We omit the software-based estimator of Strubell et al.~\cite{strubell19} as it %it provides coarse-grained accounting (power$\times$time-style) and 
+is outperformed by baselines, such as IrEne~\cite{irene}.
+%\aruna{It may make sense to called appendix sections Appendix~\ref{} instead of Section~\ref{}}
+
+\subsection{Energy Prediction for Tensor Parallelism}
+\label{sec:model_prediction}
+%
+%\aruna{It may make sense to add both hardware results here and then say the third hardware is in the appendix}
+% Figure~\ref{fig:mape_comparison} shows the mean absolute percentage error (MAPE) for \sys{} and the three primary baselines for all four model families across model sizes and parallelization degrees under tensor parallelism. For each model family (e.g., Vicuna), we train a regressor on 70\% of module-level predictions aggregated across all variants (e.g., 7B) and evaluate on the remaining 30\%. Each bar in Figure~\ref{fig:mape_comparison} reflects the resulting MAPE for one variant, with baseline comparisons included.
+Figures~\ref{fig:mape_comparison} and~\ref{fig:b40_mape_tensor_parallelism} show the mean absolute percentage error (MAPE) for \sys{} and the baselines under tensor parallelism on A6000 and B40 GPUs, respectively. 
+%%%We report tensor-parallelism results on both platforms in the main text because tensor parallelism introduces the most frequent inter-GPU collectives and is therefore the most communication-sensitive setting. 
+For each model family (e.g., Vicuna), we train a regressor on 70\% of module-level predictions across all variants (e.g., 7B), batch sizes, and input lengths, and evaluate on the remaining 30\%. More details on training are in Appendix~\ref{app:training_methodology}. %Each bar reflects the resulting MAPE for one model variant, with baseline comparisons included.
+
+% We see that \be{\sys{} consistently achieves the lowest MAPE in all cases}, with an average of 17.6\%. \aruna{are these numbers still correct?}
+% We also observed that removing synchronization sampling from \sys{} substantially increased MAPE from 17.6\% to 36.9\%, suggesting the importance of fine-grained sampling in the design of \sys{}; see Appendix~\ref{app:ablation} for the ablation and discussion.
+
+% By contrast, CodeCarbon incurs an average MAPE of 28.49\%, which is about 1.7$\times$ the MAPE of \sys{}.
+% The poor prediction accuracy of CodeCarbon is likely because of its reliance on coarse GPU profiling and slow sampling, which misses the fine-grained multi-GPU sync/transfer events and their energy consumption.
+% IrEne also performs poorly, with an average MAPE of 40.45\% (about 3$\times$ that of \sys{}).
+% This is to be expected as IrEne prediction is designed for single-GPU settings and ignores inter-GPU communication, which leads to systematic misattribution under parallelism.
+% Finally, Wilkins et al. consistently incurs high MAPE, with an average of 58.77\% (more than 4$\times$ that of \sys{}). This is because it solely uses a token-in/token-out regression that ignores inter-GPU communication. 
+% It also ignores hardware and runtime variance, and so its accuracy worsens with the degree of parallelism (number of GPUs employed).
+
+% On closer inspection of Figure~\ref{fig:mape_comparison}, we also see that the \be{performance gap between \sys{} and the baselines widens with increasing parallelization}.
+% This is because the energy contribution of AllReduce, due to its ring communication topology, increases with the number of GPUs; see Figure~\ref{fig:all_reduce_energy} in Section~\ref{s:challenges}.
+% By ignoring this important AllReduce component, the baselines incur systematic prediction errors that worsen with parallelization. 
+% In contrast, across models, scaling from 2 to 4 GPUs causes only a modest change in MAPE for \sys{}, validating its robust predictions.
+
+We see that \be{\sys{} consistently achieves the lowest MAPE in all cases} on the A6000 platform, with an average of 17.6\%.
+% We also observed that removing synchronization sampling from \sys{} substantially increased MAPE from 17.6\% to 36.9\%, suggesting the importance of fine-grained sampling in the design of \sys{}; see Appendix~\ref{app:ablation} for the ablation and discussion.
+By contrast, CodeCarbon incurs an average MAPE of 28.49\%, which is about 1.7$\times$ the MAPE of \sys{}.
+The poor prediction of CodeCarbon is  because of its reliance on coarse GPU profiling and slow sampling, which misses the energy use of fine-grained, multi-GPU communication events.
+IrEne also performs poorly, with an average MAPE of 40.45\% (about 3$\times$ that of \sys{}) because it ignores communication energy. 
+%This is to be expected as IrEne prediction is designed for single-GPU settings and ignores inter-GPU communication, which leads to systematic misattribution under parallelism.
+Finally, Wilkins et al. consistently incurs high MAPE, with an average of 58.77\% (more than 4$\times$ that of \sys{}) because it solely uses a token-in/token-out regression that ignores inter-GPU communication.
+%%%It also ignores hardware and runtime variance, and so its accuracy worsens with the degree of parallelism (number of GPUs employed).
+
+The B40 results in Figure~\ref{fig:b40_mape_tensor_parallelism} show similar trends on a different GPU platform with \sys{} achieving an average MAPE of 15.5\%, substantially better than the other alternatives. % while IrEne and Wilkins et al. incur substantially higher average errors of 43.0\% and 49.2\%, respectively.
+%%%In particular, \sys{} remains accurate across both 2-GPU and 4-GPU B40 settings, including larger models where communication contributes a larger fraction of total energy.
+%%%The B40 results therefore provide additional evidence that explicitly modeling communication modules improves robustness across GPU platforms.
+On closer inspection %of Figures~\ref{fig:mape_comparison} and~\ref{fig:b40_mape_tensor_parallelism}, 
+we observe that the \be{performance gap between \sys{} and the baselines widens with increasing parallelization}.
+This is because the energy contribution of AllReduce, due to its ring communication, increases with the number of GPUs; see Figure~\ref{fig:all_reduce_energy}. % in \S\ref{s:challenges}.
+%By ignoring this important AllReduce component, the baselines incur systematic prediction errors that worsen with parallelization.
+%%%In contrast, across models, scaling from 2 to 4 GPUs causes only a modest change in MAPE for \sys{}, validating its robust predictions.
+
+We also evaluated \sys{} on the H200 GPU, obtaining similar results (MAPE of 16.8\%); the full results for H200 are included in Appendix~\ref{app:additional_perf_results}.
+%These evaluation results show that \sys{}'s communication-aware model-tree decomposition can be extended beyond the A6000 platform.
+
+% We include results for the H200 GPU in Appendix~\ref{app:additional_perf_results}; these results further show that \sys{} maintains moderate prediction error on a third GPU platform.
+%\anshul{Anurag, say the MAPE value}
+
+%; \sys{} achieves an average MAPE of 16.8\% on this third GPU platform, showing that it maintains similar prediction error rates as A6000 and B40.}
+
+\noindent\textbf{NVML baseline.} 
+We evaluated NVML, a GPU-only energy proxy that is a widely used software-based energy predictor~\cite{Jesse-dodge-icml}.
+%rather than as a full communication-aware predictor. 
+%We train a simple linear regression model that uses NVML-reported GPU energy as the input feature to predict measured full-system energy. 
+As detailed in Appendix~\ref{app:nvml_proxy}, NVML-based regression incurs large errors (29.8--44.2\% MAPE) under tensor parallelism on A6000, confirming that GPU-only values are insufficient for full-system energy prediction. 
+% Specifically, we train a simple linear regression model that uses NVML-reported GPU energy as the sole input feature to predict measured full-system energy. 
+% As detailed in Appendix~\ref{app:nvml_proxy}, NVML-based regression incurs large errors under tensor parallelism, with 29.8--44.2\% MAPE on A6000, confirming that GPU-only measurements are insufficient for full-system energy prediction. 
+We found similar results on B40 GPU.
+%\anurag{never tested nvml for H200}
+% As detailed in Appendix~\ref{app:nvml_proxy}, NVML-based regression incurs large errors under tensor parallelism, with 29.8--44.2\% MAPE 
+%%%in the direct proxy setting and 47.4--57.3\% MAPE under leave-one-out generalization 
+% on A6000, confirming that GPU-only measurements are insufficient for full-system energy prediction.
+% We found similar results for the B40 and H200 GPU as well.
+
+% We provide the remaining B40 analyses in the appendix, including NVML-proxy and leave-one-out results, module-level and transformer-level breakdowns, and cross-architecture generalization results; see Appendices~\ref{app:nvml_proxy}, \ref{app:generalization}, and~\ref{app:module_level_results}.
+
+
+\smallskip\noindent\textbf{Generalization across model variants and families.} 
+%
+We now evaluate whether \sys{} generalizes across models. 
+We use a leave-one-variant-out setup, where one model variant (e.g., Vicuna 7B vs.\ Vicuna 33B) is held out during training and evaluated on using predictors trained on remaining variants from the family. 
+\sys{} achieves high accuracy, with MAPE ranging from 15.8--24.5\% on A6000 and 11.8--23.5\% on B40. 
+For family-level generalization, we use a leave-one-family-out setup.
+%%, where all models from one family (Vicuna vs.\ Qwen) are excluded during training and then used as the held-out test family. 
+Here too, \sys{} remains accurate, with 24.1--27.6\% MAPE on A6000 and 12.2--23.1\% MAPE on B40; by contrast, IrEne only achieves 49.3--58.4\% MAPE on A6000 and 62.9--113.3\% MAPE on B40. 
+%%%These results indicate that the model-tree decomposition and module-level features transfer across model scales and architectures; 
+Full results are in Appendices~\ref{app:additional-generalization-unseen-variants} and~\ref{app:additional-generalization-models}.
+
+\smallskip\noindent\textbf{Module-level energy prediction results.} 
+\sys{}, by design, predicts energy of not only the model, but also the constituent modules. %uses a bottom-up prediction approach, first predicting the module-level energies and then composing them via the multi-level regression (\S\ref{ss:design-prediction}) to obtain model-level energy predictions.
+While the results above focus on model-level prediction results, \sys{} obtains accurate module-level predictions as well, with MAPE of 10.0\% for A6000 and 7.1\% for B40; full results are included in Appendix~\ref{app:module-level-results}.
+%%%We also report fine-grained module-level and transformer-block prediction results in Appendix~\ref{app:module-level-results}. 
+% Across these module-level analyses, \sys{} achieves an average MAPE of 10.0\% on A6000 and 7.1\% on B40, showing that the model-tree approach remains accurate not only end-to-end but also at the level of individual model components.
+% and module-level and transformer-block prediction breakdowns for both A6000 and B40 in Appendix~\ref{app:module-level-results}.  
+% These results show that \sys{} achieves accurate fine-grained predictions, with mostly single-digit MAPE for compute modules and transformer blocks on both A6000 and B40, while the communication-heavy AllReduce module remains the most challenging but still within moderate error.
+
+In the rest of the subsections, for brevity, we report results for the A6000 hardware. 
+%Additional hardware-extension results are provided in Appendix~\ref{app:additional_perf_results}.
+
+
+\subsection{Results for Pipeline and Data Parallelism}
+\label{sec:ppdp}
+
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[height=0.22\textwidth,width=0.9\textwidth]{figures/pp_dp_comparison.pdf}
+    \vspace{-10pt}
+    \caption{MAPE results for all 4 model families under pipeline and data parallelism. Models with the largest parameter sizes in all 4 model families could not be compared for DP as they did not fit in GPU memory.}
+    \label{fig:mape_comparison_other}
+    \vspace{-18pt}
+\end{figure*}
+
+%\sys{} is designed to be applicable not only for tensor parallelism, but also for data and pipeline parallelism. 
+%We now present our results for the other two parallelism strategies. 
+Figure~\ref{fig:mape_comparison_other} compares \sys{} against CodeCarbon and IrEne across all four model families and both 2-GPU and 4-GPU deployments under pipeline and data parallelism. We omit the Wilkins et al.\ baseline as it is consistently inferior to the other baselines (see Figure~\ref{fig:mape_comparison}). We also exclude configurations that do not fit in GPU memory (e.g., Llama-70B on 2 GPUs under pipeline parallelism, and several larger models under data parallelism).
+
+% Across all evaluated configurations, \be{\sys{} achieves the lowest prediction error for both parallelism strategies}. Averaged over all points in Figure~\ref{fig:mape_comparison_other}, \sys{} attains MAPE of $\sim$15--16\% under pipeline parallelism and $\sim$14--15\% under data parallelism.
+% These results are slightly better than those for tensor parallelism from \S\ref{sec:model_prediction} (average MAPE of 17.6\%), reinforcing the more challenging nature of predicting the energy consumption under tensor parallel inference.
+% The baselines, by comparison, incur substantially higher error ($\sim$40--50\% under pipeline parallelism and $\sim$25--30\% under data parallelism).
+Across all evaluated configurations, \be{\sys{} achieves the lowest prediction error for both parallelism strategies}. 
+Averaged over all points in Figure~\ref{fig:mape_comparison_other}, \sys{} attains MAPE of 12.2\% under pipeline parallelism and 10.8\% under data parallelism.
+These results are better than those for tensor parallelism from \S\ref{sec:model_prediction}, reinforcing the more challenging nature of predicting energy under tensor-parallel inference.
+The baselines, by comparison, incur much higher error: CodeCarbon incurs 41.3\% and IrEne incurs 48.3\% under pipeline parallelism, while CodeCarbon incurs 27.9\% and IrEne incurs 26.1\% under data parallelism.
+
+%\aruna{this paragraph is a good candidate to be removed}
+Pipeline parallel inference 
+incurs recurring inter-GPU data transfers at every stage boundary. 
+As the number of GPUs increases (hence more stages), the \emph{frequency} of communication events also increases, making pipeline inference particularly sensitive to unmodeled communication effects. 
+As a result CodeCarbon and IrEne exhibit large errors, especially under 4-GPU. % that often exceed 40\% for several larger-model configurations.
+Data parallel inference, on the other hand, incurs less frequent and more structured communication.
+Thus,
+the penalty for omitting communication, as in CodeCarbon and IrEne, is smaller than in pipeline parallelism, though still much higher than \sys{}.
+
+
+
+
+\subsection{Ablation Study: Communication Model}
+\label{sec:ablation_comm_modeling}
+To isolate the benefit of explicitly modeling communication energy (\S\ref{ss:design-communication}), we evaluate an ablated version of \sys{} under tensor parallelism that retains the model-tree decomposition and compute-module predictors, but replaces our communication model (\S\ref{ss:design-communication}) with a simpler communication energy estimate: multiplying an average observed AllReduce power value with the duration of each AllReduce call. 
+%%%This ablated variant is not communication-free: it still accounts for AllReduce energy. 
+%%%However, instead of using a communication model (\S\ref{ss:design-communication}), it estimates communication energy by multiplying an average observed AllReduce power value with the duration of each AllReduce invocation. 
+We denote this variant as \textsc{AvgComm}.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/mape_all_model_families_no_comm_modeling.pdf}
+    \vspace{-24pt}
+    \caption{Ablation of explicit communication modeling. The ablated variant replaces \sys{}'s communication model with an average communication-power estimate for AllReduce events.}
+    \label{fig:ablation_comm_modeling}
+    \vspace{-15pt}
+\end{figure*}
+
+\begin{comment}
+This ablation tests whether communication energy can be captured by a standard average-power accounting method, or whether explicit communication modeling is necessary. 
+In tensor parallelism, AllReduce is not just a fixed energy addition. 
+During ring AllReduce, GPUs exchange tensor chunks with neighboring GPUs across multiple steps. 
+These transfers are not always perfectly aligned across ranks: if one GPU reaches the collective earlier or receives data later than another GPU, it may spend time idle while waiting for the communication step to complete. 
+Thus, the energy of an AllReduce invocation depends not only on its elapsed time, but also on tensor size, communication volume, effective bandwidth, number of GPUs, and the ring communication pattern.
+\end{comment}
+
+Figure~\ref{fig:ablation_comm_modeling} shows that \textsc{AvgComm} incurs substantially higher prediction error of 34.0\% compared to \sys{}'s 12.9\%. 
+The error increase is especially noticeable for larger models and 4-GPU settings, where AllReduce contributes a larger fraction of total energy. 
+%%%This result shows that simply multiplying average communication power by communication time is not sufficient for accurate prediction.
+The key distinction is that \sys{} models communication as a first-class module whose features reflect the actual communication. 
+%%%By using tensor-derived byte volumes, calibrated effective bandwidth, and operation-specific communication parameters, \sys{} can distinguish between AllReduce invocations that have different transfer sizes and different communication behavior. 
+The \textsc{AvgComm} ablation collapses these differences into a single average value, losing the structure needed to predict communication energy accurately. 
+%%%This confirms that explicit communication modeling is a necessary part of \sys{}'s design, rather than an implementation detail.
+
+\subsection{Ablation Study: Model Tree methodology}
+\label{sec:ablation}
+
+To isolate the importance of \sys{}'s model-tree abstraction, we evaluate a direct model-level prediction ablation which removes module-level decomposition and trains a single regressor to predict model energy from aggregate model-level features. 
+%%%This ablation tests whether parallel inference energy can be treated as a standard end-to-end regression problem, without explicitly modeling the energy of compute modules and communication modules.
+
+
+\begin{comment}
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.05}
+
+\begin{tabular}{lc}
+\toprule
+\textbf{Model Family} & \textbf{Direct Model-Level} \tabularnewline
+                      & \textbf{Prediction} \tabularnewline
+\midrule
+\rowcolor{rowblue} Vicuna  & 61.2\%  \tabularnewline
+Mistral                    & 84.3\%  \tabularnewline
+\rowcolor{rowblue} Llama   & 115.1\% \tabularnewline
+Qwen                       & 60.8\%  \tabularnewline
+\bottomrule
+\end{tabular}
+\vspace{-9pt}
+\caption{Ablation of direct model-level energy prediction. The table reports MAPE when total model energy is predicted directly without using \sys{}'s model-tree abstraction and module-level composition.}
+\label{tab:direct_model_prediction_ablation}
+\vspace{-9pt}
+\end{table}
+\end{comment}
+
+We find that directly predicting total model energy leads to substantially higher errors: the MAPE increases to 61.2\% for Vicuna, 84.3\% for Mistral, 115.1\% for Llama, and 60.8\% for Qwen.
+%%%Table~\ref{tab:direct_model_prediction_ablation} (\aruna{Perhaps the table can be removed?} shows that directly predicting total model energy leads to substantially higher errors. 
+%%%The MAPE increases to 61.2\% for Vicuna, 84.3\% for Mistral, 115.1\% for Llama, and 60.8\% for Qwen. 
+This shows that energy prediction for parallel inference is not simply a model-level regression problem. Runtime features vary significantly across compute-heavy modules (e.g., Attention, MLP) and communication-heavy modules (e.g., AllReduce). Collapsing these effects into a single aggregate feature loses this structure and causes the predictor to mix heterogeneous sources of energy variation.
+
+%%%This ablation also shows why simply averaging runtime features across the full model is insufficient. The problem is not only that the aggregate signal is noisy, but that different modules respond differently to the same runtime and architectural factors. For example, GPU utilization, execution time, memory behavior, and communication volume can have different meanings for compute modules and collective-communication modules. By first predicting energy at the module level and then composing these estimates through the model-tree regressor, \sys{} preserves this heterogeneity and obtains substantially lower error than the direct model-level baseline.
+
+
+%%%\review{This finding is also consistent with our preliminary experiments on energy modeling. In our pruning study, removing 50\% of attention heads reduced parameter count by only about 12\%, from 6.7B to 5.6B, but reduced energy by as much as 4$\times$, showing that energy does not follow simple latency-like or size-based scaling rules. In contrast, a model-tree-based predictor captured the transformed execution structure and predicted the pruned model's energy with less than 5\% error. These results reinforce the need for \sys{}'s explicit model-tree abstraction and module-level energy composition instead of treating energy as a direct extension of latency prediction.}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.40\textwidth]{figures/pareto_plot.pdf}
+    \vspace{-9pt}
+    \caption{Predicted trade-off between inference time per token and energy per token (log scale) for Vicuna under tensor parallelism.}
+    \label{fig:pareto_plot}
+    \vspace{-18pt}
+\end{figure}
+\subsection{Use case: Inference time vs.\ energy for different levels of tensor parallelization} 
+\label{sec:usecase}
+%\aruna{this should be moved to the end}
+%\aruna{we need to rewrite this to sound like a use case section}
+
+We now present a use case to highlight the applicability of \sys{} in practice.
+Consider a setting where an LLM user needs to choose a model and the number of GPUs across which to deploy. 
+A developer may want to both maximize throughput (i.e., have less time spent on inference per token) and reduce energy consumption. 
+%\anshul{can we add DP and PP here too? if not, at least clarify it is only TP here.}
+We show how the user can employ \sys{} to make the right decision.
+Figure~\ref{fig:pareto_plot} 
+illustrates the trade-off between (predicted) energy as a function of inference time for Vicuna models of sizes 7B, 13B, and 33B, across different tensor parallelism configurations (1, 2, and 4 GPUs). We use the highest batch size achievable for each model size. Results are normalized per token and presented on log scale. When compared to ground truth, our prediction errors are around 15\%.
+% inference time per token and predicted energy consumption per token across different Vicuna model sizes and GPU configurations under tensor parallelism; we use the highest batch size achievable for each model size.
+% \niranjan{In the appendix \autoref{} we show that this plot is identical in terms of the trend when using the actual measure energy.}
+%\arunacomment{Not sure what remains consistent mean, do you mean the errors are low when compared to ground truth? If that is the case we should just say that.}
+%\anurag{This is not the right place for the sentence. Let me move it and mark for review}
+
+%We see that per-token energy generally increases with per-token inference time.
+%, both metrics follow a clear co-trend. 
+ 
+Both per-token energy and inference time increase with model size (7B to 33B), but decrease as the degree of parallelization increases across all three model sizes.
+% \anshul{Anurag, change opening of this sentence to something that is either obvious or visible from graph}
+%However, as the model size scales from 7B to 33B, energy rises more quickly, compared to inference time, due to increased computational complexity, leading to diminishing efficiency gains from parallelization. 
+% In effect, the energy impact of parallelization is not straightforward, and having predicted energy can help the user make an informed choice.
+%This result shows that the energy effect of parallelization is not always straightforward, motivating the need for energy prediction.
+%\anshul{Anurag, we had below from proposal, can you use similar statement with right numbers in above para? i think it provides better detail}
+For smaller models such as Vicuna-7B, increasing GPU count from 2 to 4 reduced energy consumption by 43\%, but improved inference time by only 20\%, highlighting diminishing returns. In contrast, larger models like Vicuna-33B benefited more significantly, with a 33\% reduction in energy and a 50\% improvement in speed. 
+%
+We also extended this analysis to the Qwen family of models, where we found a different scaling efficiency: Qwen-32B achieved 40\% energy reduction when scaling from 2 to 4 GPUs, compared to 33\% for Vicuna-33B, while maintaining similar speedups. 
+%We verify this trend for other model families as well, and the predicted energy estimates are close ($\sim$15\% MAPE) to actual values.
+% \anshul{add MAPE above, roughly}
+
+In effect, the energy impact of parallelization is not obvious. Without accurate predictions, model developers require numerous trial-and-error experiments to make energy-conscious parallelization decisions. \sys{} mitigates this effort, providing scalable energy predictions to guide decisions.
+%The result of this non-linearity and model-specifity is that model developers require a large number of trial-and-error experiments to make energy-conscious parallelization decisions. 
+% (For smaller models such as Vicuna-7B, increasing GPU count from 2 to 4 reduced energy consumption by 43\%, but improved inference time by only 20\%, highlighting diminishing returns. In contrast, larger models like Vicuna-33B benefited more significantly, with a 33\% reduction in energy and a 50\% improvement in speed.)
