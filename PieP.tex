@@ -186,7 +186,7 @@ The significance of these features is further evaluated through a correlation an
 To model the communication energy introduced by parallel inference, \sys{} first treats inter-GPU communication events as explicit modules in the model tree. 
 For each communication event $e$, we trace the communication tensor sizes and calculate network transfer bytes sent ($B_{e}^{\mathrm{out}}$) and received ($B_{e}^{\mathrm{in}}$) by each GPU and use an offline-calibrated $\alpha$--$\beta$ model~\cite{hockney1988parallel2} to estimate the communication latency as:
 
-\vspace{-21pt}
+\vspace{-2pt}
 \begin{equation}
 \label{eq:comm-latency-main}
 T_{e}^{\mathrm{comm}} =
@@ -195,7 +195,7 @@ T_{e}^{\mathrm{comm}} =
 \left(
 B_{e}^{\mathrm{out}} + B_{e}^{\mathrm{in}}
 \right),
-\vspace{-9pt}
+\vspace{-2pt}
 \end{equation}
 % \noindent where $o$ denotes the communication operation (e.g., AllReduce, point-to-point), $p$ is the number of GPUs, $\alpha_{o,p}$ captures fixed communication (networking) overhead, and $\beta_{o,p}$ captures the inverse effective bandwidth. 
 % This predicted latency is then translated to predicted communication module energy by multiplying with calibrated communication power and used in the multi-level regressor (\S\ref{ss:design-prediction}) to obtain end-to-end model-level energy prediction.
