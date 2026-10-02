@@ -1,41 +1,12 @@
-%Energy consumption and efficiency of LLMs has seen a large body of work in recent years. 
-%Our goal is to provide an easy-to-use framework that enables developers to make energy efficient choices for LLM deployment. To this end, 
-%%%We survey related work that supports the goal of enabling developers to make energy efficient choices for LLM deployment using energy measurement and prediction techniques. 
-%Similar to energy optimizations, there has also been several related works on optimizing inference latency~\cite{agrawal2025medhaefficientlyservingmultimillion,cheng2024minillmmemoryefficientstructuredpruning,dong2024lowbitcommunicationtensorparallel}, 
-%However, these works do not extend to prediction and are orthogonal to our work. 
-%\smallskip
 \noindent\textbf{Energy prediction frameworks for LLMs.}
-%Prior work on LLM energy prediction has relied on course-grained utilization, token counts, or software telemetry~\cite{strubell19,Nguyen-hotcarbon,wilkins2024offlineenergyoptimalllmserving}. However, these approaches do not explicitly model multi-gpu communication and fail to capture complex interactions that affect overall energy consumption~\cite{sustainlp}; we demonstrate this experimentally in Section~\ref{s:evaluation}. IrEne~\cite{irene}, the closest methodological baseline, targets single-GPU execution but by ignoring communication and synchronization energy, IrEne substantially underestimates end-to-end energy for parallel inference even after extrapolating compute to multi-GPU settings. The more recent work on energy prediction~\cite{Jesse-dodge-icml} uses a tool called CodeCarbon~\cite{codecarbon} which provides a lower bound prediction by accurately measuring power consumption of GPUs. Our experiments (Section~\ref{s:evaluation}) show that although this is more accurate than other approaches, it still results in large prediction errors. 
-There has been work on predicting the energy consumption of LLMs~\cite{strubell19,Nguyen-hotcarbon,wilkins2024offlineenergyoptimalllmserving,irene,codecarbon}. Many of these works~\cite{strubell19,Nguyen-hotcarbon,wilkins2024offlineenergyoptimalllmserving} rely on utilization, token counts, or software telemetry, which are coarse-grained features. Consequently, these techniques have been shown to incur high prediction errors~\cite{sustainlp}. 
+There has been work on predicting the energy consumption of LLMs~\cite{strubell19,Nguyen-hotcarbon,wilkins2024offlineenergyoptimalllmserving,irene,codecarbon}. Many of these works~\cite{strubell19,Nguyen-hotcarbon,wilkins2024offlineenergyoptimalllmserving} rely on utilization, token counts, or software telemetry, which are coarse-grained features. Consequently, these techniques have been shown to incur high prediction errors~\cite{sustainlp}.
 
-IrEne~\cite{irene} is the closest methodological baseline to our work. IrEne 
-%goes beyond utilization and instead 
-takes into account the relationship between different model components when making predictions. %However, IrEne targets single-GPU execution and thus substantially underestimates end-to-end energy consumption of parallel inference (see \S\ref{sec:model_prediction}). 
-The more recent work on energy prediction~\cite{Jesse-dodge-icml} uses a tool called CodeCarbon~\cite{codecarbon} which provides a lower bound prediction by accurately measuring GPU power consumption. However, these existing prediction techniques target single-GPU execution and in some cases (e.g., CodeCarbon) rely on coarse aggregate signals that only provide a lower bound. Thus, they substantially underestimate the energy of parallel inference (see \S\ref{sec:model_prediction}). 
-%Taken together, these limitations show that existing prediction methods are not designed for multi-GPU inference: they either rely on coarse aggregate signals or single-GPU model abstractions, and therefore \be{do not explicitly model the communication energy introduced by parallel inference}. 
-This is the gap that \sys{} addresses.
+IrEne~\cite{irene} is the closest methodological baseline to our work. IrEne takes into account the relationship between different model components when making predictions. The more recent work on energy prediction~\cite{Jesse-dodge-icml} uses CodeCarbon~\cite{codecarbon}, which estimates energy from software telemetry. However, these prediction techniques target single-GPU execution and in some cases rely on coarse aggregate signals. Thus, they substantially underestimate the energy of parallel inference (\S\ref{sec:model_prediction}). This is the gap that \sys{} addresses.
 
 \smallskip
-\noindent\textbf{Energy measurement.} 
-Another area of research focuses on energy measurement~\cite{lacoste2019quantifyingcarbonemissionsmachine, anthony2020carbontrackertrackingpredictingcarbon, codecarbon, energyVis, mauricio, luccioni2022estimatingcarbonfootprintbloom,dnne} rather than prediction. 
-These measurements rely on hardware monitors (external or integrated such as IPMI) or software-based tools such as NVML. Hardware monitors might not always be available and energy measurements require exclusive access to hardware, which is difficult in multi-tenant environments. 
-Software profilers such as NVML have poor accuracy as they only consider GPU power and are
-often treated as an energy lower bound~\cite{Jesse-dodge-icml}.
-We empirically confirm, in \S\ref{sec:model_prediction}, that software energy profilers underestimate energy. % leading to large prediction errors.
+\noindent\textbf{Energy measurement.}
+Another area of research focuses on energy measurement~\cite{lacoste2019quantifyingcarbonemissionsmachine, anthony2020carbontrackertrackingpredictingcarbon, codecarbon, energyVis, mauricio, luccioni2022estimatingcarbonfootprintbloom,dnne} rather than prediction. These measurements rely on hardware monitors (external or integrated such as IPMI) or software-based tools such as NVML. Hardware monitors might not always be available and energy measurements require exclusive access to hardware, which is difficult in multi-tenant environments. Software profilers such as NVML only account for GPU power and are often treated as an energy lower bound~\cite{Jesse-dodge-icml}. We empirically confirm in \S\ref{sec:model_prediction} that GPU-only energy is an inaccurate proxy for full-system energy.
 
 \smallskip
-
-\noindent{\textbf{Modeling and predicting latency.}}
-There have been more recent works~\cite{distsim, dpro,srifty, neusight,habitat,daydream} that predict LLM latency instead of energy. 
-However, predicting energy is a fundamentally \be{different problem} compared to latency. For example, GPUs are optimized for performance; as a result, scaling different architectural knobs (more cores, higher clocks) translates to lower latency in a relatively deterministic manner. Energy, on the other hand, does \emph{not} scale linearly with the same knobs, making prediction harder (as we show experimentally in Appendix~\ref{app:latency-ablation}). 
-% \anshul{maybe we should refer to subsections in the above instead of always referring S5}
-%\anshul{below can go if we need to save space}
-%The goal of this work is to leverage highly accurate energy predictions to help developers identify energy-efficient parallelization settings. 
-Other works on improving energy efficiency, such as dynamic voltage and frequency scaling (DVFS)~\cite{kakolyris2024sloawaregpufrequencyscaling,pccl} are orthogonal to our work. 
-
-%\smallskip
-%\noindent{\textbf{Energy optimizations.}}
-%Other works have focused on LLM energy optimizations, including parallelization strategies, dynamic schedulers, and dynamic voltage and frequency scaling~\cite{kakolyris2024sloawaregpufrequencyscaling,pccl}. 
-%Similar to energy optimizations, there has also been several related works on optimizing inference latency~\cite{agrawal2025medhaefficientlyservingmultimillion,cheng2024minillmmemoryefficientstructuredpruning,dong2024lowbitcommunicationtensorparallel}, 
-%However, these works do not extend to prediction and are orthogonal to our work. 
-%%\aruna{I am a bit worried about this orthogonal argument, our goal ultimately is do reduce overall energy, so perhaps we should say prediction will help with determining which optimization to use?}
+\noindent\textbf{Modeling and predicting latency.}
+There have been several recent works~\cite{distsim,dpro,srifty,neusight,habitat,daydream} that predict LLM latency instead of energy. However, predicting energy is a fundamentally different problem. GPUs are optimized for performance, so architectural changes such as more cores or higher clocks often translate relatively predictably to latency, whereas energy depends jointly on execution time, power dynamics, communication, and synchronization. In \S\ref{sec:ablation}, we experimentally show that directly retargeting a recent latency-prediction methodology to energy produces substantially higher error than \sys{}. Other works on improving energy efficiency, such as dynamic voltage and frequency scaling (DVFS)~\cite{kakolyris2024sloawaregpufrequencyscaling,pccl}, are orthogonal to our prediction framework.
