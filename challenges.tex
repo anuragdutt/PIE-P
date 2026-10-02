@@ -16,11 +16,13 @@ There are three main parallelism strategies that are widely used for LLM inferen
     \item \textbf{Tensor parallelism} splits individual model computations (such as matrix multiplications) across multiple GPUs to enable parallel execution of operations~\cite{megatron}.
 \end{enumerate}
 
-% \noindent We provide details on the parallelism strategies and communication patterns, i.e., AllReduce in tensor, point-to-point transfers in pipeline, and AllGather in data parallelism, in Appendices~\ref{app:collective-background} and \ref{app:data-collection-parallel}. 
-\review{\noindent Each parallelism strategy introduces a distinct communication pattern.
-Tensor parallelism uses ring AllReduce, consisting of a ReduceScatter phase followed by an AllGather phase, where GPUs exchange tensor chunks with neighboring GPUs.
-Pipeline parallelism uses point-to-point transfers of forward activations between adjacent pipeline stages.
-Data parallelism performs an AllGather after the local forward passes to collate outputs across replicas.}
+\anurag{Appendix - A Background: AllReduce, AllGather, and Point-to-Point communication}
+\review{Tensor, pipeline, and data parallelism expose different communication structures, and these differences determine both the amount of data moved and where communication energy appears in an inference run. In tensor parallelism, the main collective is ring AllReduce. GPUs are arranged in a logical ring and each GPU communicates only with its immediate neighbors. Ring AllReduce proceeds in two phases. During \emph{ReduceScatter}, each GPU partitions its tensor into $p$ chunks, sends a chunk to its successor, receives one from its predecessor, and reduces the received values with its local chunk. After $p-1$ steps, every GPU holds one fully reduced shard. During \emph{AllGather}, these reduced shards circulate for another $p-1$ steps until every GPU reconstructs the complete reduced tensor. Thus, tensor parallelism repeatedly combines data movement with synchronization, making its communication energy sensitive to GPU count, tensor size, and rank-to-rank waiting behavior.}
+
+\review{Pipeline parallelism instead communicates activations between adjacent stages. After stage $i$ finishes the forward computation for a microbatch, it sends its output activations to stage $i+1$ using a point-to-point device transfer over the available interconnect. During inference there are no gradient exchanges, so these hop-local activation transfers are the primary communication events. The transfer lies directly on the dependency path between the last forward kernel of stage $i$ and the first kernel of stage $i+1$, making the stage boundary the natural unit for communication-energy accounting.}
+
+\review{Data parallelism has a different structure because each replica executes a complete forward pass on its local input independently. In our inference setup, communication occurs primarily at the end of the forward pass, where a single AllGather collates the final outputs (e.g., logits or token scores) across replicas. The output exchange begins after the local output layer completes and the concatenated result is then handed to the host for downstream sampling or post-processing. Compared with tensor and pipeline parallelism, this tail-end communication is less frequent and more structured, which makes its energy easier to attribute.}
+
 %Our framework can be extended to other strategies such as hybrid parallelism that combines existing parallelism methods; we leave this to future work.
 %\medskip
 %\subsection*{Challenges in predicting parallel inference energy}
@@ -42,9 +44,7 @@ In multi-GPU inference, this is further complicated because each module's comput
 % \anurag{Make the compute energy smaller}
 
 \noindent\textbf{Communication energy.}
-\review{
-Multi-GPU inference additionally incurs \emph{substantial} energy from inter-GPU communication, including AllReduce in tensor parallelism, point-to-point transfers in pipeline parallelism, and AllGather in data parallelism, which is absent in single-device execution.
-}
+\review{Multi-GPU inference additionally incurs \emph{substantial} energy from inter-GPU communication, including AllReduce in tensor parallelism, point-to-point transfers in pipeline parallelism, and AllGather in data parallelism, which is absent in single-device execution.}
 % \noindent\textbf{Communication energy.}
 % Multi-GPU inference additionally incurs \emph{substantial} energy from inter-GPU communication (e.g., AllReduce/ReduceScatter/AllGather, see Appendix~\ref{app:collective-background}), 
 %\aruna{if you define these somewhere in the appendix, please add a reference}, 
@@ -113,4 +113,3 @@ GPUs may lag/lead each other non-deterministically.
 %\smallskip\noindent{\textbf{Challenges: Communication energy in parallel inference.}}
 %Energy consumption under parallel inference is shaped not only by local computation but also by inter-GPU \emph{communication} and the synchronization it induces. 
 %}
-

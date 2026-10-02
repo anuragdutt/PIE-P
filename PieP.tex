@@ -54,61 +54,12 @@ This decomposition into modules can be obtained from existing ML frameworks, inc
 
 \subsection{Features for Module-Level Prediction}
 \label{ss:design-features}
-% \begin{table}[t]
-% \centering
-% \small
-% \setlength{\tabcolsep}{4pt}
-% \renewcommand{\arraystretch}{1.05}
-
-% \begin{tabular}{@{}
-% >{\raggedright\arraybackslash}p{0.48\linewidth}
-% >{\raggedright\arraybackslash}p{0.48\linewidth}
-% @{}}
-% \toprule
-% \rowcolor{rowblue}
-% \multicolumn{2}{@{}l@{}}{\textbf{Resource Utilization Features}}\\
-% \midrule
-% CPU utilization (\%) & CPU mem. utilization (\%)\\
-% \rowcolor{rowblue} GPU utilization (\%) & GPU mem. utilization (\%)\\
-% CPU clock (GHz) & CPU mem. clock (GHz)\\
-% \rowcolor{rowblue} Memory (bytes) & GPU clock (GHz)\\
-% GPU mem. clock (GHz) & \\
-% \midrule
-
-% \rowcolor{rowblue}
-% \multicolumn{2}{@{}l@{}}{\textbf{Execution Features}}\\
-% \midrule
-% Batch size & Sequence length\\
-% \rowcolor{rowblue} FLOPs per token (billions) & Execution time (s)\\
-% GPU energy NVML (Wh) & Number of GPUs\\
-% \midrule
-
-% \rowcolor{rowblue}
-% \multicolumn{2}{@{}l@{}}{\textbf{Model Structure Features}}\\
-% \midrule
-% Feed-forward dimension & Transformer blocks\\
-% \rowcolor{rowblue} Hidden embedding size & Attention heads\\
-% Key--value heads & \\
-% \midrule
-
-% \rowcolor{rowblue}
-% \multicolumn{2}{@{}l@{}}{\textbf{Communication Features}}\\
-% \midrule
-% Bytes transferred & Effective bandwidth \\
-% % \rowcolor{rowblue} Hidden embedding size & Attention heads\\
-
-% \bottomrule
-% \end{tabular}
-% \vspace{-9pt}
-% \caption{Features used by \sys{} for prediction.}
-% \label{tab:features}
-% \vspace{-17pt}
-% \end{table}
 
 To capture the relationship between energy and the compute and communication modules, \sys{} leverages hardware resource, model execution, and model structural features.
 For example, the \emph{number of attention heads} influences how work is divided across GPUs during tensor parallelization, affecting communication volume in AllReduce operations.
 We thus extract such structural features from the model for parallelized energy prediction; existing utilization- or metrics-based heuristics~\cite{strubell19,Nguyen-hotcarbon,wilkins2024offlineenergyoptimalllmserving} miss out on this critical information. \anurag{fixing a small typo here}
 
+\anurag{Appendix - C Methodology: Features}
 \begin{table}[t]
 \centering
 \small
@@ -156,30 +107,10 @@ Bytes transferred & Effective bandwidth\\
 \caption{Features used by \sys{} for prediction.}
 \label{tab:features}
 \end{table}
-% To capture the relationship between energy and the compute and communication modules, \sys{} leverages hardware resource, model execution, and model structural features. 
-% For example, the \emph{number of attention heads} influences how work is divided across GPUs during tensor parallelization, affecting communication volume in AllReduce operations. 
-% We thus extract such structural features from the model for parallelized energy prediction; existing utilization- or metrics-based heuristics~\cite{strubell19,Nguyen-hotcarbon,wilkins2024offlineenergyoptimalllmserving} miss out on critical this information.
-%\aruna{And? Are we doing anything special about this?}
 
-% The features are summarized into resource utilization (captures system- and device-level activity during inference), execution parameters (capture the workload configuration that drives runtime/energy), model structure (captures architectural properties that determine tensor sizes), and communication (captures bytes send and received, effective bandwidth). The full feature set is presented in Appendix~\ref{appendix:features}.
-\review{
-Table~\ref{tab:features} summarizes the complete feature set.
-Resource utilization features capture system- and device-level activity during inference; execution features capture the workload configuration that drives runtime and energy; and model-structure features capture architectural properties that determine tensor sizes.
-For communication modules, \sys{} additionally uses the amount of data transferred and the effective bandwidth of each inter-GPU communication event.
-}
-%Table~\ref{tab:features} summarizes these features, grouped into resource utilization (captures system- and device-level activity during inference), execution parameters (capture the workload configuration that drives runtime/energy), and model structure (captures architectural properties that determine tensor sizes). 
-%For communication modules, we additionally collect communication-specific features: the bytes sent, the bytes received, and the effective bandwidth for each inter-GPU communication event.
-\review{A Spearman rank correlation analysis across Vicuna configurations shows that total energy correlates not only with NVML GPU energy ($\rho=0.633$--$0.762$), but also with batch size ($\rho=0.735$--$0.737$), execution time ($\rho=0.658$--$0.664$), and memory usage ($\rho=0.656$--$0.663$). This motivates using multiple runtime and structural features rather than a single utilization signal.}
-% The significance of these features is validated via a correlation analysis 
-% %of runtime features 
-% and an ablation study (Appendix~\ref{app:correlation}).
-% %%\anshul{Anurag, update above sentence and reference}
+\review{Table~\ref{tab:features} summarizes the complete feature set. Resource-utilization features capture system- and device-level activity during module execution, including CPU/GPU utilization, memory utilization, clock frequencies, and memory use. Execution features capture the workload configuration and observed execution cost, including batch size, sequence length, FLOPs per token, execution time, NVML-reported GPU energy, and GPU count. Model-structure features such as feed-forward dimension, Transformer-block count, hidden size, attention-head count, and key--value-head count expose architectural differences that determine tensor shapes and how work is divided across ranks. For communication modules, \sys{} additionally records the amount of data transferred and the effective bandwidth of each inter-GPU event.}
 
-%Similarly, the feed-forward dimension and hidden embedding size determine the size of tensors that must be communicated during synchronization.
-%We use the same feature set for the module-level regressors across both compute and communication modules, ensuring a consistent regression interface.
-
-%Runtime features including CPU metrics and GPU energy are collected using low-overhead libraries, NVIDIA-SMI and Linux's procfs. 
-%Structural features are extracted from the model architecture, and FLOPs are computed using standard formulas based on model dimensions and operations.
+\review{The feature representation is also designed to scale with GPU count. Instead of learning a separate set of coefficients for each physical GPU, \sys{} summarizes runtime features across participating GPUs using the mean, standard deviation, minimum, and maximum. The mean captures the overall activity level, while the spread and extrema expose imbalance and straggler behavior. These aggregates are combined with the static structural and communication features before training the module-specific regressors.}
 
 \subsection{Communication Energy Modeling}
 \label{ss:design-communication}
@@ -197,120 +128,54 @@ B_{e}^{\mathrm{out}} + B_{e}^{\mathrm{in}}
 \right),
 \vspace{-2pt}
 \end{equation}
-% \noindent where $o$ denotes the communication operation (e.g., AllReduce, point-to-point), $p$ is the number of GPUs, $\alpha_{o,p}$ captures fixed communication (networking) overhead, and $\beta_{o,p}$ captures the inverse effective bandwidth. 
-% This predicted latency is then translated to predicted communication module energy by multiplying with calibrated communication power and used in the multi-level regressor (\S\ref{ss:design-prediction}) to obtain end-to-end model-level energy prediction.
-% Appendix~\ref{app:alpha-beta-comm} provides further details.
-\review{
-where $o$ denotes the communication operation (e.g., AllReduce or
-point-to-point transfer), $p$ is the number of GPUs,
-$\alpha_{o,p}$ captures the fixed communication overhead, and
-$\beta_{o,p}$ captures the message-size-dependent transfer cost.
-For each event, we define the per-GPU communication volume as
-$V_e = B_e^{out}+B_e^{in}$.
 
-We calibrate $\alpha_{o,p}$ and $\beta_{o,p}$ offline for each
-communication operation and GPU count by recording the observed
-communication time and volume across calibration runs and fitting
-$T_e^{obs}=\alpha_{o,p}+\beta_{o,p}V_e$.
-The corresponding effective bandwidth is
-$B^{eff}_{o,p}=1/\beta_{o,p}$.
-For ring AllReduce, a tensor of size $S_e$ bytes results in a
-per-GPU communication volume of
+\anurag{Appendix - D Methodology: Details of predicting communication energy}
+\review{Here $o$ denotes the communication operation (e.g., AllReduce or point-to-point transfer), $p$ is the number of GPUs, $\alpha_{o,p}$ captures fixed startup and synchronization overhead, and $\beta_{o,p}$ captures the message-size-dependent transfer cost. For each event we define the per-GPU communication volume as $V_e=B_e^{\mathrm{out}}+B_e^{\mathrm{in}}$. We calibrate the model offline for every communication operation type and GPU count by sweeping communication volumes, recording the observed duration $T_e^{\mathrm{obs}}$, and fitting $T_e^{\mathrm{obs}}=\alpha_{o,p}+\beta_{o,p}V_e$. The corresponding effective bandwidth is $B^{\mathrm{eff}}_{o,p}=1/\beta_{o,p}$. This calibration is performed once per hardware/topology and is then reused by the predictor.}
+
+\review{For ring AllReduce, the communication volume follows directly from the ReduceScatter and AllGather phases. If the communicated tensor has size $S_e$ bytes, each GPU sends and receives $(p-1)S_e/p$ bytes in each phase; therefore the total per-GPU communication volume is
 \begin{equation}
-V_e^{AR} = \frac{2(p-1)}{p}S_e,
+V_e^{AR}=\frac{2(p-1)}{p}S_e.
 \label{eq:allreduce_volume}
 \end{equation}
-accounting for both the ReduceScatter and AllGather phases.
-For pipeline-parallel point-to-point transfers and data-parallel
-AllGather operations, we compute the communication volume from
-the transferred tensor size using the corresponding communication
-pattern.
-
-Finally, \sys{} converts the predicted communication latency to
-communication-module energy by multiplying it with the calibrated
-average communication power $\bar{P}^{comm}_{o,p}$:
+For pipeline-parallel point-to-point transfers, the corresponding activation tensor size determines the event volume; for data-parallel AllGather, the final output tensor and number of replicas determine the volume. After predicting $T_e^{\mathrm{comm}}$, \sys{} converts communication time to energy using calibrated average communication power $\bar{P}^{\mathrm{comm}}_{o,p}$:
 \begin{equation}
-\widehat{E}^{comm}_e =
-\bar{P}^{comm}_{o,p} T_e^{comm}.
+\widehat{E}^{comm}_e=\bar{P}^{comm}_{o,p}T_e^{comm}.
 \label{eq:comm_energy}
 \end{equation}
-The resulting communication-module estimate is then composed with
-the compute-module estimates by the multi-level regressor
-described in \S\ref{ss:design-prediction}.
-}
-%%%, and Appendices~\ref{app:tp-ar}, \ref{app:pp-p2p}, and \ref{app:dp-allgather} describe the communication patterns for tensor, pipeline, and data parallelism, respectively.
+The resulting communication-module estimate is then composed with the compute-module estimates by the multi-level regressor in \S\ref{ss:design-prediction}.}
 
 %\anurag{remove the hat from T here and appendix}
 
 \subsection{Measurement and Data Collection}
 \label{ss:design-measurement}
 %\aruna{can this be moved to after the regression discussion?}
-%%%We now describe how \sys{} performs module-level measurements for training its energy predictor, covering both compute activity and parallelism-induced communication/synchronization costs. These measurements are then synchronized with the utilization logs.
-
-%\smallskip\noindent\textbf{Compute activity measurement.}
-
-%We combine these two feature classes to train regressors that estimate module compute energy, which are then used 
-%to compose end-to-end energy predictions. 
-
-%\smallskip\noindent\textbf{Communication activity measurement.}
-%%\anurag{This doesn't seem accurate. We need to talk about how we measure the features. We can leave the details of the communication energy profiling in appendix and I need to talk about the general methodology about how the features are collected.}
-% %
-% \sys{} measures inter-GPU communication and synchronization energy differently under the three parallelism strategies, discussed further in Section \ref{app:data-collection-parallel}
 \sys{} measures communication energy by first identifying the communication events introduced by each parallelism strategy and then isolating the corresponding windows in the execution trace. For instance, for tensor parallelism, these events relate to the AllReduce operation.
-%For tensor parallelism, these events are primarily  collective operations such as AllReduce; for pipeline parallelism, they are point-to-point activation transfers between adjacent stages; and for data parallelism, they are tail-end AllGather operations used to collate outputs. 
 We align these communication windows with the system power trace and integrate power over the corresponding intervals to obtain communication-energy measurements for training the communication-module predictor. 
-%\anshul{mention power monitor used?}
-Effective bandwidth is computed from the observed communication volume and transfer time, and the bytes sent and received are derived directly from the tensor size being communicated. % the data type size, and the collective communication pattern.
-\review{The communication window is identified differently for each parallelism strategy. \textbf{Tensor parallelism:} we profile ring AllReduce over repeated runs to capture synchronization and communication variability caused by non-deterministic leading and lagging GPU behavior; the measured window includes both hop transfers and synchronization stalls across ReduceScatter and AllGather. \textbf{Pipeline parallelism:} for each stage boundary, we use \texttt{nsys} to timestamp the end of stage $i$'s last forward kernel and the start of stage $i{+}1$'s first forward kernel; the intervening interval is attributed to the point-to-point activation transfer, and power is integrated over this window. \textbf{Data parallelism:} replicas execute local forward passes independently and perform a tail-end AllGather to collate final outputs, so we profile this final output stage to measure the corresponding communication energy.}
+Effective bandwidth is computed from the observed communication volume and transfer time, and the bytes sent and received are derived directly from the tensor size being communicated.
+
+\anurag{Appendix - B Methodology: Data Collection to predict communication energy}
+\review{\textbf{Tensor parallelism.} We repeatedly profile the ring AllReduce operation instead of relying on a single execution trace. Ranks do not always reach a collective at exactly the same time because of runtime scheduling, cache behavior, and memory-access variation. Consequently, the observed AllReduce interval contains both link activity and synchronization/waiting energy. We collect repeated runs to capture the distribution of leading and lagging GPU behavior across the ReduceScatter and AllGather phases, so that the communication predictor is not trained on one potentially unrepresentative synchronization instance.}
+
+\review{\textbf{Pipeline parallelism.} Communication is isolated at every stage boundary. We use \texttt{nsys} timestamps to identify the completion of the last forward kernel on stage $i$ and the start of the first forward kernel on stage $i+1$. The interval between these events is attributed to the point-to-point activation transfer, and system power is integrated over the same interval to obtain the corresponding communication energy. This directly associates the transferred activation tensor with the energy consumed while moving it between the producing and consuming stages.}
+
+\review{\textbf{Data parallelism.} Each replica completes its local forward pass independently and a final AllGather collates the outputs. We therefore profile the tail-end interval beginning when the output layer completes and ending when the AllGather finishes. Because there is one such output-collation event per inference request in our setup, this boundary is more straightforward than in tensor or pipeline parallelism and typically contributes less communication volume. Across all three strategies, bytes sent/received are derived from the communicated tensor size and communication pattern, while effective bandwidth is computed from observed transfer volume and duration.}
 
 For compute modules, \sys{} records (i) resource-specific signals that summarize system/GPU activity, and (ii) model-specific descriptors extracted from the LLM configuration.
 
-% \smallskip\noindent\textbf{Addressing non-determinism in energy usage.}
-% \aruna{should this still be there?}
-% As discussed in Section~\ref{s:challenges}, there is inherent energy consumption variation in multi-GPU settings due to non-deterministic events (e.g., stragglers and communication collectives) in parallel inference.
-% \review{To address this, we run repeated, controlled passes to capture the \be{distribution} of wait-time and energy outcomes under a target configuration; these empirical distributions are then reused during prediction.} 
-% Each module (e.g., Self-Attention, MLP, AllReduce) is sampled $10{,}000$ times to build a robust dataset. Using these distributions during training of the regressors yields more representative communication-energy predictors, leading to lower errors, as shown in Section~\ref{app:piep-waiting-phase}.
-
-% To ensure that the models are evaluated under varied operational conditions, we consider multiple output configurations. Specifically, for each model variant, we run experiments using batch sizes of 8, 16, 32, and 64, and output sequence lengths of 512 and 1024. This variation captures both low and high throughput scenarios, improving the robustness and generalizability of our predictors. 
-
-% We note that \sys{} performs all measurements \emph{offline}. 
-% As a result, during inference, \sys{} incurs \be{no additional overhead}. 
-%\smallskip\noindent\textbf{Offline Sampling.}
 \sys{} collects repeated offline measurements for each module across controlled execution runs to build a stable training dataset for the module-level regressors (explained in \S\ref{ss:design-prediction}). 
-%%%For each module type, such as Self-Attention, MLP, and AllReduce, we collect $10{,}000$ samples across controlled execution runs. 
-This strategy %reduces sensitivity to run-to-run noise, 
-captures non-deterministic straggler effects in observed communication behavior of parallel deployments, and improves the stability of the learned regressors.
+This strategy captures non-deterministic straggler effects in observed communication behavior of parallel deployments, and improves the stability of the learned regressors.
 We note that \sys{} performs all measurements \emph{offline}. 
 As a result, during inference, \sys{} incurs \be{no additional measurement overhead}.
 
 \subsection{Multi-Level Regression}
 \label{ss:design-prediction}
 %%\anurag{fix the Pec annotation and explain the regression bottom up}
-%\sys{} employs regressors to integrate all of the components above $$(\S\ref{ss:design-decomposition}--\S\ref{ss:design-measurement}) into an end-to-$end energy prediction.
-%
 Our methodology for training regressors follows a hierarchical approach, training module-level predictors and then combining them for model-level prediction. 
-%%We employed 3-fold cross-validation at the module level, training on 70\% of the data and testing on the remaining 30\%. 
 As \sys{} obtains features from multiple GPUs, naively learning separate coefficients per GPU does not scale as the number of parameters grows with GPU count.
 Instead, \sys{} computes and employs \emph{statistical aggregates} of the runtime features by computing the mean, standard deviation, min and max values across all GPUs. 
-%This \be{scalable aggregation approach} captures workload imbalance through the standard deviation and min/max statistics.
 These are combined with the static structural features to form the complete feature vector for each sample.
 
-%%\textcolor{blue}{NB[Why aren't we referencing Irene here? This formulation comes from or at the very least inspired by Irene.]}
 \sys{} uses the following multi-level regression formulation: 
-% \begin{equation}
-% \begin{array}{rl@{\;}l}
-% P_e(n) &=
-% \sum_{c \in child(n)} \alpha(c)\, P_e(c),
-% & \mbox{if } n \mbox{ is non-leaf},\\[2pt]
-% P_e(n) &=
-% P_e^{\text{Module}_i}(n),
-% & \mbox{if } n \mbox{ is leaf},\\[4pt]
-% \alpha(c) &=
-% 1 + \frac{\tanh(\mathbf{W}\,\mathrm{feat}(c)+b)}{\tau}.
-% &
-% \end{array}
-% \label{eqn:end2end-predicted-sum}
-% \end{equation}
 \vspace{-6pt}
 \begin{equation}
 \small
@@ -331,29 +196,17 @@ T_{c}^{\mathrm{comm}}
 \vspace{-7pt}
 \end{equation}
 
-
 Eq.~(\ref{eqn:end2end-predicted-sum}) defines the final model-level prediction. 
 Here, $P_e(m)$ denotes the predicted end-to-end energy of model $m$. 
-$\mathcal{C}(m)$ is the set of compute and communication modules. % combined using the scaling factor $\alpha(c)$.
-%Each module $c \in \mathcal{C}(m)$ contributes predicted energy $P_e(c)$, and this contribution is scaled by a learned composition weight $\alpha(c)$.
+$\mathcal{C}(m)$ is the set of compute and communication modules.
 
 For a compute module $c$, $P_e(c)$ is predicted using the module-specific regression function $f_{\mathrm{Module}(c)}$, as a function of compute modules $\mathrm{Module}(c)$ and its features.
-%The subscript $\mathrm{Module}(c)$ denotes the type of compute module represented by $c$, such as Attention, MLP, normalization, or embedding. 
 In our implementation, $f_{\mathrm{Module}(c)}$ is a decision-tree regressor trained separately for each module type.
-%~\cite{irene}. 
-%The input $\mathrm{feat}(c)$ denotes the feature vector for module $c$, consisting of the resource utilization, execution, and model structure features described in \S\ref{ss:design-features}.
 For a communication module $c$, $P_e(c)$ is computed as the average observed communication power $\bar{P}^{\mathrm{comm}}_{o(c),p}$ multiplied by the communication time $T_{c}^{\mathrm{comm}}$ (obtained from Eq.~\eqref{eq:comm-latency-main}).
-%The superscript $\mathrm{comm}$ indicates that the term corresponds to communication. 
-%The subscript $o(c),p$ indicates that 
 The average communication power is calibrated for the communication operation type $o(c)$ (e.g., AllReduce, AllGather) and the number of GPUs, $p$. 
-%%Here, $o(c)$ denotes the operation associated with communication module $c$, such as AllReduce, AllGather, ReduceScatter, or point-to-point transfer. 
 
 Finally, $\alpha(c)$ is the learned composition weight for module $c$. 
-%It is computed from the feature vector $\mathrm{feat}(c)$ using learned parameters $\mathbf{W}$ and $b$, while $\tau$ controls the scale of the correction. 
 This formulation makes the bottom-up prediction explicit: \sys{} first predicts the energy of compute and communication modules, then combines those module-level predictions to obtain the model-level energy $P_e(m)$.
-%While this multi-level regression is inspired by prior work~\cite{irene}, \sys{} explicitly adds the communication module and its energy modeling and the multi-GPU support.
-% The regressor is specified via the energy prediction $P_e(n)$ for an arbitrary node $n$ in the model tree abstraction, as shown in Eq.~(\ref{eqn:end2end-predicted-sum}). The energy of a node $n$ is computed as a weighted sum of the energy of its children $c \in child(n)$. The weight $\alpha(c)$ for each child is itself predicted as a regression over the features $feat(c)$ of the corresponding component or through a separately trained regressor if the child $c$ is a leaf. 
-% Formally, the predicted energy for node $n$ is given in Eq.~(\ref{eqn:end2end-predicted-sum}), where $\mathbf{W}$ are the recurrent parameters (weights) of the model learnt over a training set of ground-truth energy measurements and $P_e^{\text{Module}_i}(n)$ denotes the predicted energy for leaf node $n$ corresponding to module type $\text{Module}_i$, obtained using a module-specific regression.
 
-This hierarchical composition enables \emph{cross-variant and cross-model reuse} since many modules (e.g., Attention and MLP blocks) are shared across different models. %By learning the energy use of these modules, \sys{} can predict the energy of models for which no model-specific predictor was explicitly trained, as long as they are composed of the same modules. 
+This hierarchical composition enables \emph{cross-variant and cross-model reuse} since many modules (e.g., Attention and MLP blocks) are shared across different models. 
 While we do not claim generalization to arbitrary architectures, our results in \S\ref{sec:model_prediction} demonstrate that \sys{} achieves  generalization across multiple model families.
