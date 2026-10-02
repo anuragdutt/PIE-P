@@ -169,7 +169,7 @@ For communication modules, \sys{} additionally uses the amount of data transferr
 }
 %Table~\ref{tab:features} summarizes these features, grouped into resource utilization (captures system- and device-level activity during inference), execution parameters (capture the workload configuration that drives runtime/energy), and model structure (captures architectural properties that determine tensor sizes). 
 %For communication modules, we additionally collect communication-specific features: the bytes sent, the bytes received, and the effective bandwidth for each inter-GPU communication event.
-The significance of these features is further evaluated through a correlation analysis and an ablation study (Appendix~\ref{app:correlation}).
+\review{A Spearman rank correlation analysis across Vicuna configurations shows that total energy correlates not only with NVML GPU energy ($\rho=0.633$--$0.762$), but also with batch size ($\rho=0.735$--$0.737$), execution time ($\rho=0.658$--$0.664$), and memory usage ($\rho=0.656$--$0.663$). This motivates using multiple runtime and structural features rather than a single utilization signal.}
 % The significance of these features is validated via a correlation analysis 
 % %of runtime features 
 % and an ablation study (Appendix~\ref{app:correlation}).
@@ -236,7 +236,7 @@ average communication power $\bar{P}^{comm}_{o,p}$:
 \end{equation}
 The resulting communication-module estimate is then composed with
 the compute-module estimates by the multi-level regressor
-described in \S\ref{ss:multi-level-regression}.
+described in \S\ref{ss:design-prediction}.
 }
 %%%, and Appendices~\ref{app:tp-ar}, \ref{app:pp-p2p}, and \ref{app:dp-allgather} describe the communication patterns for tensor, pipeline, and data parallelism, respectively.
 
@@ -261,7 +261,7 @@ described in \S\ref{ss:multi-level-regression}.
 We align these communication windows with the system power trace and integrate power over the corresponding intervals to obtain communication-energy measurements for training the communication-module predictor. 
 %\anshul{mention power monitor used?}
 Effective bandwidth is computed from the observed communication volume and transfer time, and the bytes sent and received are derived directly from the tensor size being communicated. % the data type size, and the collective communication pattern.
-Appendix~\ref{app:data-collection-parallel} details the communication pattern and measurement procedure for each parallelism mode.
+\review{The communication window is identified differently for each parallelism strategy. \textbf{Tensor parallelism:} we profile ring AllReduce over repeated runs to capture synchronization and communication variability caused by non-deterministic leading and lagging GPU behavior; the measured window includes both hop transfers and synchronization stalls across ReduceScatter and AllGather. \textbf{Pipeline parallelism:} for each stage boundary, we use \texttt{nsys} to timestamp the end of stage $i$'s last forward kernel and the start of stage $i{+}1$'s first forward kernel; the intervening interval is attributed to the point-to-point activation transfer, and power is integrated over this window. \textbf{Data parallelism:} replicas execute local forward passes independently and perform a tail-end AllGather to collate final outputs, so we profile this final output stage to measure the corresponding communication energy.}
 
 For compute modules, \sys{} records (i) resource-specific signals that summarize system/GPU activity, and (ii) model-specific descriptors extracted from the LLM configuration.
 
@@ -357,5 +357,3 @@ This formulation makes the bottom-up prediction explicit: \sys{} first predicts 
 
 This hierarchical composition enables \emph{cross-variant and cross-model reuse} since many modules (e.g., Attention and MLP blocks) are shared across different models. %By learning the energy use of these modules, \sys{} can predict the energy of models for which no model-specific predictor was explicitly trained, as long as they are composed of the same modules. 
 While we do not claim generalization to arbitrary architectures, our results in \S\ref{sec:model_prediction} demonstrate that \sys{} achieves  generalization across multiple model families.
-
-
