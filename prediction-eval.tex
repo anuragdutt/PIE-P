@@ -41,15 +41,19 @@ Ground-truth system power/energy is measured using  external Watts Up Pro  monit
 % \anurag{Ground-truth system power/energy is measured with an external power monitor (Watts Up Pro) and whatever we use for Milan - IPMI.}
 % \anurag{Mention the network interconnect}
 
+\review{\smallskip\noindent\textbf{Training methodology.} We use 3-fold cross-validation at the module level, training on 70\% of datapoints and testing on the remaining 30\%. Each module type (e.g., Self-Attention, MLP, and AllReduce) is sampled $10{,}000$ times; each sample aggregates $100{,}000$ repeated executions under a fixed GPU configuration. For each sample, we compute the mean, standard deviation, minimum, and maximum of the runtime features across participating GPUs and combine them with the structural features in Table~\ref{tab:features}. We sample batch sizes 8, 16, 32, and 64 and output sequence lengths 512 and 1024, and use DeepSpeed~\cite{deepspeed} for all parallel inference experiments.}
+
 %\smallskip\noindent\textbf{Models.}
 
-\smallskip\noindent\textbf{Baselines.} We compare \sys{} against the following (further implementation details in Appendix~\ref{app:baselines}): \\
+%\smallskip\noindent\textbf{Baselines.} We compare \sys{} against the following (further implementation details in Appendix~\ref{app:baselines}): \\
+\review{\smallskip\noindent\textbf{Baselines.} We compare \sys{} against the following:} \\
 \noindent\textbf{\be{IrEne}~\cite{irene}:} A hierarchical energy prediction framework for single-GPU execution, representing the closest methodological baseline;
 \textbf{\be{CodeCarbon}~\cite{codecarbon}:} a state-of-the-art software-based energy/\(\mathrm{CO_2}\) estimator;
 \textbf{\be{Wilkins et al.}~\cite{wilkins2024offlineenergyoptimalllmserving}:} per-request energy prediction using prompt/output lengths as input;
 \textbf{\be{NVML}~\cite{nvml}:} measures GPU power draw in software and is commonly used~\cite{strubell19,luccioni2022estimatingcarbonfootprintbloom,Jesse-dodge-icml} for energy prediction due to ease of use. 
 %%%We separately compare with NVML in Appendix~\ref{app:nvml_proxy}. \aruna{where is this? I dont see it}
 %\anshul{explain the implementation, is it simple LR using NVML or multiple LR using NVML and other (which?) features?}
+\review{For implementation, IrEne uses its hierarchical model-tree predictor over runtime and model features, while CodeCarbon integrates telemetry-derived power over time. For Wilkins et al., we fit $e_K(\tau_{\mathrm{in}},\tau_{\mathrm{out}})=\alpha_0\tau_{\mathrm{in}}+\alpha_1\tau_{\mathrm{out}}+\alpha_2\tau_{\mathrm{in}}\tau_{\mathrm{out}}$ on a calibration set. For NVML, we train a model-level linear regressor with NVML-reported GPU energy as the independent variable and measured total-system energy as the dependent variable.}
 We omit the software-based estimator of Strubell et al.~\cite{strubell19} as it %it provides coarse-grained accounting (power$\times$time-style) and 
 is outperformed by baselines, such as IrEne~\cite{irene}.
 %\aruna{It may make sense to called appendix sections Appendix~\ref{} instead of Section~\ref{}}
@@ -61,7 +65,8 @@ is outperformed by baselines, such as IrEne~\cite{irene}.
 % Figure~\ref{fig:mape_comparison} shows the mean absolute percentage error (MAPE) for \sys{} and the three primary baselines for all four model families across model sizes and parallelization degrees under tensor parallelism. For each model family (e.g., Vicuna), we train a regressor on 70\% of module-level predictions aggregated across all variants (e.g., 7B) and evaluate on the remaining 30\%. Each bar in Figure~\ref{fig:mape_comparison} reflects the resulting MAPE for one variant, with baseline comparisons included.
 Figures~\ref{fig:mape_comparison} and~\ref{fig:b40_mape_tensor_parallelism} show the mean absolute percentage error (MAPE) for \sys{} and the baselines under tensor parallelism on A6000 and B40 GPUs, respectively. 
 %%%We report tensor-parallelism results on both platforms in the main text because tensor parallelism introduces the most frequent inter-GPU collectives and is therefore the most communication-sensitive setting. 
-For each model family (e.g., Vicuna), we train a regressor on 70\% of module-level predictions across all variants (e.g., 7B), batch sizes, and input lengths, and evaluate on the remaining 30\%. More details on training are in Appendix~\ref{app:training_methodology}. %Each bar reflects the resulting MAPE for one model variant, with baseline comparisons included.
+%For each model family (e.g., Vicuna), we train a regressor on 70\% of module-level predictions across all variants (e.g., 7B), batch sizes, and input lengths, and evaluate on the remaining 30\%. More details on training are in Appendix~\ref{app:training_methodology}. %Each bar reflects the resulting MAPE for one model variant, with baseline comparisons included.
+\review{For each model family (e.g., Vicuna), we train a regressor on 70\% of module-level predictions across all variants (e.g., 7B), batch sizes, and input lengths, and evaluate on the remaining 30\%, following the training protocol in \S\ref{ss:esetup}.}
 
 % We see that \be{\sys{} consistently achieves the lowest MAPE in all cases}, with an average of 17.6\%. \aruna{are these numbers still correct?}
 % We also observed that removing synchronization sampling from \sys{} substantially increased MAPE from 17.6\% to 36.9\%, suggesting the importance of fine-grained sampling in the design of \sys{}; see Appendix~\ref{app:ablation} for the ablation and discussion.
@@ -96,7 +101,8 @@ This is because the energy contribution of AllReduce, due to its ring communicat
 %By ignoring this important AllReduce component, the baselines incur systematic prediction errors that worsen with parallelization.
 %%%In contrast, across models, scaling from 2 to 4 GPUs causes only a modest change in MAPE for \sys{}, validating its robust predictions.
 
-We also evaluated \sys{} on the H200 GPU, obtaining similar results (MAPE of 16.8\%); the full results for H200 are included in Appendix~\ref{app:additional_perf_results}.
+%We also evaluated \sys{} on the H200 GPU, obtaining similar results (MAPE of 16.8\%); the full results for H200 are included in Appendix~\ref{app:additional_perf_results}.
+\review{We also evaluated \sys{} on 2$\times$ H200 GPUs, obtaining an average model-level MAPE of 16.8\%. Per-variant MAPE is 13.34\%, 13.78\%, and 14.45\% for Vicuna-7B/13B/33B; 16.25\%, 17.25\%, and 17.83\% for Mistral-8B/24B/48B; 15.30\%, 16.51\%, and 26.53\% for Llama-7B/13B/70B; and 16.07\%, 19.41\%, and 14.90\% for Qwen-8B/14B/32B. At the module level, H200 MAPE is 8.80\% for Self-Attention, 7.44\% for MLP, 9.25\% for AllReduce, 8.12\% for LayerNorm/RMSNorm, and 7.78\% for LLMEmbedding.}
 %These evaluation results show that \sys{}'s communication-aware model-tree decomposition can be extended beyond the A6000 platform.
 
 % We include results for the H200 GPU in Appendix~\ref{app:additional_perf_results}; these results further show that \sys{} maintains moderate prediction error on a third GPU platform.
@@ -108,7 +114,8 @@ We also evaluated \sys{} on the H200 GPU, obtaining similar results (MAPE of 16.
 We evaluated NVML, a GPU-only energy proxy that is a widely used software-based energy predictor~\cite{Jesse-dodge-icml}.
 %rather than as a full communication-aware predictor. 
 %We train a simple linear regression model that uses NVML-reported GPU energy as the input feature to predict measured full-system energy. 
-As detailed in Appendix~\ref{app:nvml_proxy}, NVML-based regression incurs large errors (29.8--44.2\% MAPE) under tensor parallelism on A6000, confirming that GPU-only values are insufficient for full-system energy prediction. 
+%As detailed in Appendix~\ref{app:nvml_proxy}, NVML-based regression incurs large errors (29.8--44.2\% MAPE) under tensor parallelism on A6000, confirming that GPU-only values are insufficient for full-system energy prediction. 
+\review{On A6000, NVML-based regression incurs 28.5--44.2\% MAPE when used as a direct proxy for total-system energy. Under leave-one-variant-out generalization, its MAPE rises to 47.4--57.3\% (51.5\% on average), compared with 15.8--24.5\% for \sys{}, confirming that GPU-only energy is insufficient for accurate full-system prediction.}
 % Specifically, we train a simple linear regression model that uses NVML-reported GPU energy as the sole input feature to predict measured full-system energy. 
 % As detailed in Appendix~\ref{app:nvml_proxy}, NVML-based regression incurs large errors under tensor parallelism, with 29.8--44.2\% MAPE on A6000, confirming that GPU-only measurements are insufficient for full-system energy prediction. 
 We found similar results on B40 GPU.
@@ -130,11 +137,13 @@ For family-level generalization, we use a leave-one-family-out setup.
 %%, where all models from one family (Vicuna vs.\ Qwen) are excluded during training and then used as the held-out test family. 
 Here too, \sys{} remains accurate, with 24.1--27.6\% MAPE on A6000 and 12.2--23.1\% MAPE on B40; by contrast, IrEne only achieves 49.3--58.4\% MAPE on A6000 and 62.9--113.3\% MAPE on B40. 
 %%%These results indicate that the model-tree decomposition and module-level features transfer across model scales and architectures; 
-Full results are in Appendices~\ref{app:additional-generalization-unseen-variants} and~\ref{app:additional-generalization-models}.
+%Full results are in Appendices~\ref{app:additional-generalization-unseen-variants} and~\ref{app:additional-generalization-models}.
+\review{For leave-one-family-out evaluation, \sys{}/IrEne MAPE is 24.1/49.3\% for Vicuna, 27.0/56.5\% for Mistral, 26.1/55.3\% for Llama, and 27.6/58.4\% for Qwen on A6000. On B40, the corresponding values are 13.2/63.8\%, 15.1/71.2\%, 23.1/113.3\%, and 12.2/62.9\%, respectively.}
 
 \smallskip\noindent\textbf{Module-level energy prediction results.} 
 \sys{}, by design, predicts energy of not only the model, but also the constituent modules. %uses a bottom-up prediction approach, first predicting the module-level energies and then composing them via the multi-level regression (\S\ref{ss:design-prediction}) to obtain model-level energy predictions.
-While the results above focus on model-level prediction results, \sys{} obtains accurate module-level predictions as well, with MAPE of 10.0\% for A6000 and 7.1\% for B40; full results are included in Appendix~\ref{app:module-level-results}.
+%While the results above focus on model-level prediction results, \sys{} obtains accurate module-level predictions as well, with MAPE of 10.0\% for A6000 and 7.1\% for B40; full results are included in Appendix~\ref{app:module-level-results}.
+\review{While the results above focus on model-level prediction, \sys{} also obtains accurate module-level predictions, with average MAPE of 10.0\% on A6000 and 7.1\% on B40. On A6000, the 2-/4-GPU MAPE values are 8.8/11.4\% for Self-Attention, 6.6/9.5\% for MLP, 17.3/19.4\% for AllReduce, 6.4/7.3\% for LayerNorm/RMSNorm, and 9.9/9.6\% for LLMEmbedding. On B40, the corresponding values are 5.3/8.2\%, 4.8/8.8\%, 11.2/13.1\%, 3.2/7.8\%, and 7.1/8.2\%.}
 %%%We also report fine-grained module-level and transformer-block prediction results in Appendix~\ref{app:module-level-results}. 
 % Across these module-level analyses, \sys{} achieves an average MAPE of 10.0\% on A6000 and 7.1\% on B40, showing that the model-tree approach remains accurate not only end-to-end but also at the level of individual model components.
 % and module-level and transformer-block prediction breakdowns for both A6000 and B40 in Appendix~\ref{app:module-level-results}.  
@@ -248,6 +257,8 @@ We find that directly predicting total model energy leads to substantially highe
 %%%Table~\ref{tab:direct_model_prediction_ablation} (\aruna{Perhaps the table can be removed?} shows that directly predicting total model energy leads to substantially higher errors. 
 %%%The MAPE increases to 61.2\% for Vicuna, 84.3\% for Mistral, 115.1\% for Llama, and 60.8\% for Qwen. 
 This shows that energy prediction for parallel inference is not simply a model-level regression problem. Runtime features vary significantly across compute-heavy modules (e.g., Attention, MLP) and communication-heavy modules (e.g., AllReduce). Collapsing these effects into a single aggregate feature loses this structure and causes the predictor to mix heterogeneous sources of energy variation.
+
+\review{We also test whether a latency-prediction-style method can be repurposed for energy prediction using a NeuSight-style baseline~\cite{neusight}. We retain NeuSight's fine-grained execution decomposition and MLP predictor but replace latency with measured system energy as the target. MAPE is 79.19\% for Vicuna-7B, 93.24\% for Vicuna-13B, and 89.38\% for Vicuna-33B (87.3\% on average), roughly $3$--$5\times$ worse than \sys{}. This shows that latency-oriented execution features do not sufficiently capture the power dynamics, communication overheads, and synchronization effects that determine total system energy.}
 
 %%%This ablation also shows why simply averaging runtime features across the full model is insufficient. The problem is not only that the aggregate signal is noisy, but that different modules respond differently to the same runtime and architectural factors. For example, GPU utilization, execution time, memory behavior, and communication volume can have different meanings for compute modules and collective-communication modules. By first predicting energy at the module level and then composing these estimates through the model-tree regressor, \sys{} preserves this heterogeneity and obtains substantially lower error than the direct model-level baseline.
 
