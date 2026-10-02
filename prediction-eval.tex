@@ -270,7 +270,7 @@ Figure~\ref{fig:mape_comparison_other} compares \sys{} against CodeCarbon and Ir
 Across all evaluated configurations, \be{\sys{} achieves the lowest prediction error for both parallelism strategies}. 
 Averaged over all points in Figure~\ref{fig:mape_comparison_other}, \sys{} attains MAPE of 12.2\% under pipeline parallelism and 10.8\% under data parallelism.
 These results are better than those for tensor parallelism from \S\ref{sec:model_prediction}, reinforcing the more challenging nature of predicting energy under tensor-parallel inference.
-The baselines, by comparison, incur much higher error: CodeCarbon incurs 41.3\% and IrEne incurs 48.3\% under pipeline parallelism, while CodeCarbon incurs 27.9\% and IrEne incurs 26.1\% under data parallelism.
+\review{The baselines incur higher error: CodeCarbon and IrEne achieve 29.0\% and 28.3\% MAPE under pipeline parallelism, respectively, and 19.6\% and 15.3\% under data parallelism.}
 
 Pipeline parallel inference incurs recurring inter-GPU data transfers at every stage boundary. 
 As the number of GPUs increases (hence more stages), the \emph{frequency} of communication events also increases, making pipeline inference particularly sensitive to unmodeled communication effects. 
