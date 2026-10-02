@@ -115,26 +115,32 @@ We evaluated NVML, a GPU-only energy proxy that is a widely used software-based 
 \anurag{Appendix - G Additional results: NVML as a proxy for total energy}
 \review{We first ask whether GPU-only energy from NVML can predict full-system energy through a simple regression. Table~\ref{tab:nvml_proxy_combined} reports both direct prediction and leave-one-variant-out generalization on A6000. In the direct setting, Vicuna ranges from 29.8--33.4\% MAPE, Mistral from 39.0--44.2\%, Llama from 28.5--31.3\%, and Qwen from 38.0--42.4\%. These errors are substantially larger than \sys{} because a GPU-board energy signal does not explicitly encode host energy, architecture-dependent communication volume, or synchronization behavior.}
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
-\small
-\setlength{\tabcolsep}{5pt}
-\renewcommand{\arraystretch}{1.04}
-\begin{tabular}{lcc|lcc}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.02}
+\begin{tabular}{lcc}
 \toprule
-\textbf{Model} & \textbf{Direct} & \textbf{LOO} & \textbf{Model} & \textbf{Direct} & \textbf{LOO} \\
+\textbf{Model} & \textbf{Direct} & \textbf{LOO} \\
 \midrule
-\rowcolor{rowblue} Vicuna 7B & 33.4\% & 48.3\% & Llama 7B & 31.1\% & 47.4\% \\
-Vicuna 13B & 31.4\% & 51.1\% & Llama 13B & 31.3\% & 49.1\% \\
-\rowcolor{rowblue} Vicuna 33B & 29.8\% & 50.0\% & Llama 70B & 28.5\% & 53.4\% \\
-Mistral 8B & 44.2\% & 57.3\% & Qwen 8B & 42.4\% & 51.1\% \\
-\rowcolor{rowblue} Mistral 24B & 40.3\% & 52.1\% & Qwen 14B & 38.0\% & 49.2\% \\
-Mistral 48B & 39.0\% & 51.3\% & Qwen 32B & 38.3\% & 56.5\% \\
+\rowcolor{rowblue} Vicuna 7B  & 33.4\% & 48.3\% \\
+Vicuna 13B                    & 31.4\% & 51.1\% \\
+\rowcolor{rowblue} Vicuna 33B & 29.8\% & 50.0\% \\
+Mistral 8B                    & 44.2\% & 57.3\% \\
+\rowcolor{rowblue} Mistral 24B & 40.3\% & 52.1\% \\
+Mistral 48B                   & 39.0\% & 51.3\% \\
+\rowcolor{rowblue} Llama 7B   & 31.1\% & 47.4\% \\
+Llama 13B                     & 31.3\% & 49.1\% \\
+\rowcolor{rowblue} Llama 70B  & 28.5\% & 53.4\% \\
+Qwen 8B                       & 42.4\% & 51.1\% \\
+\rowcolor{rowblue} Qwen 14B   & 38.0\% & 49.2\% \\
+Qwen 32B                      & 38.3\% & 56.5\% \\
 \bottomrule
 \end{tabular}
-\caption{NVML-based regression on A6000. ``Direct'' uses NVML-reported GPU energy to predict total-system energy; ``LOO'' evaluates leave-one-variant-out generalization.}
+\caption{NVML-based regression on A6000. Direct uses NVML GPU energy to predict total-system energy; LOO evaluates leave-one-variant-out generalization.}
 \label{tab:nvml_proxy_combined}
-\end{table*}
+\end{table}
 
 \review{NVML generalization is worse still. When the NVML regressor is trained on the remaining variants in a family and tested on an excluded model, MAPE rises to 47.4--57.3\%, averaging 51.5\%, compared with 15.8--24.5\% for \sys{} on the same A6000 generalization task. The gap shows that GPU-only energy is not a sufficient proxy when the held-out model changes tensor shapes, communication behavior, and non-GPU system energy. We found the same qualitative trend on B40.}
 
@@ -145,51 +151,57 @@ We use a leave-one-variant-out setup, where one model variant (e.g., Vicuna 7B v
 \anurag{Appendix - I Additional Results: Generalization across variants}
 \review{Table~\ref{tab:variant_generalization_combined} reports the complete leave-one-variant-out results. \sys{} achieves 15.8--24.5\% MAPE on A6000 and 11.8--23.5\% on B40. The larger Mistral and Llama variants are generally more difficult, but the predictor remains stable across model scales. We separately test workload extrapolation across batch sizes: MAPE ranges from 16.89--21.82\% with an average of 19.05\%. Generalizing from batch size 16 to 32 gives 19.33\% average MAPE, while the reverse direction gives 18.77\%, suggesting that the execution and structural features capture workload-energy scaling rather than merely memorizing one operating point.}
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
-\small
-\setlength{\tabcolsep}{6pt}
-\renewcommand{\arraystretch}{1.04}
-\begin{tabular}{lcc|lcc}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.02}
+\begin{tabular}{lcc}
 \toprule
-\textbf{Model} & \textbf{A6000} & \textbf{B40} & \textbf{Model} & \textbf{A6000} & \textbf{B40} \\
+\textbf{Model} & \textbf{A6000} & \textbf{B40} \\
 \midrule
-\rowcolor{rowblue} Vicuna 7B & 15.84\% & 11.83\% & Llama 7B & 18.15\% & 13.56\% \\
-Vicuna 13B & 17.72\% & 12.22\% & Llama 13B & 21.11\% & 14.64\% \\
-\rowcolor{rowblue} Vicuna 33B & 17.55\% & 12.81\% & Llama 70B & 22.41\% & 23.52\% \\
-Mistral 8B & 21.17\% & 14.41\% & Qwen 8B & 20.15\% & 14.25\% \\
-\rowcolor{rowblue} Mistral 24B & 23.13\% & 15.29\% & Qwen 14B & 20.99\% & 17.21\% \\
-Mistral 48B & 24.52\% & 15.81\% & Qwen 32B & 18.98\% & 13.21\% \\
+\rowcolor{rowblue} Vicuna 7B  & 15.84\% & 11.83\% \\
+Vicuna 13B                    & 17.72\% & 12.22\% \\
+\rowcolor{rowblue} Vicuna 33B & 17.55\% & 12.81\% \\
+Mistral 8B                    & 21.17\% & 14.41\% \\
+\rowcolor{rowblue} Mistral 24B & 23.13\% & 15.29\% \\
+Mistral 48B                   & 24.52\% & 15.81\% \\
+\rowcolor{rowblue} Llama 7B   & 18.15\% & 13.56\% \\
+Llama 13B                     & 21.11\% & 14.64\% \\
+\rowcolor{rowblue} Llama 70B  & 22.41\% & 23.52\% \\
+Qwen 8B                       & 20.15\% & 14.25\% \\
+\rowcolor{rowblue} Qwen 14B   & 20.99\% & 17.21\% \\
+Qwen 32B                      & 18.98\% & 13.21\% \\
 \bottomrule
 \end{tabular}
 \caption{Leave-one-variant-out prediction MAPE for \sys{} on A6000 and B40.}
 \label{tab:variant_generalization_combined}
-\end{table*}
+\end{table}
 
 For family-level generalization, we use a leave-one-family-out setup.
 
 \anurag{Appendix - H Additional Results: Generalization across models}
 \review{Generalizing to an entirely unseen family is harder than holding out one variant because the computation graph, attention mechanism, and module dimensions may all change. We therefore exclude all measurements from one family during training and test the resulting predictor on that family under the same deployment settings. Table~\ref{tab:family_generalization_combined} shows that \sys{} remains substantially more accurate than IrEne on both platforms. On A6000, \sys{} obtains 24.1--27.6\% MAPE compared with 49.3--58.4\% for IrEne; on B40, \sys{} obtains 12.2--23.1\% compared with 62.9--113.3\% for IrEne. The result indicates that reusable module types and structural features transfer across architectures better than a single-GPU hierarchy that omits communication.}
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
-\small
-\setlength{\tabcolsep}{7pt}
-\renewcommand{\arraystretch}{1.04}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.02}
 \begin{tabular}{lcccc}
 \toprule
-\textbf{Excluded Family} & \multicolumn{2}{c}{\textbf{A6000 MAPE}} & \multicolumn{2}{c}{\textbf{B40 MAPE}} \\
- & \textbf{\sys{}} & \textbf{IrEne} & \textbf{\sys{}} & \textbf{IrEne} \\
+& \multicolumn{2}{c}{\textbf{A6000}} & \multicolumn{2}{c}{\textbf{B40}} \\
+\textbf{Family} & \textbf{\sys{}} & \textbf{IrEne} & \textbf{\sys{}} & \textbf{IrEne} \\
 \midrule
-\rowcolor{rowblue} Vicuna & 24.1\% & 49.3\% & 13.2\% & 63.8\% \\
-Mistral & 27.0\% & 56.5\% & 15.1\% & 71.2\% \\
-\rowcolor{rowblue} Llama & 26.1\% & 55.3\% & 23.1\% & 113.3\% \\
-Qwen & 27.6\% & 58.4\% & 12.2\% & 62.9\% \\
+\rowcolor{rowblue} Vicuna  & 24.1\% & 49.3\% & 13.2\% & 63.8\% \\
+Mistral                  & 27.0\% & 56.5\% & 15.1\% & 71.2\% \\
+\rowcolor{rowblue} Llama  & 26.1\% & 55.3\% & 23.1\% & 113.3\% \\
+Qwen                     & 27.6\% & 58.4\% & 12.2\% & 62.9\% \\
 \bottomrule
 \end{tabular}
 \caption{Leave-one-family-out generalization on A6000 and B40.}
 \label{tab:family_generalization_combined}
-\end{table*}
+\end{table}
 
 \smallskip\noindent\textbf{Module-level energy prediction results.} 
 \sys{}, by design, predicts energy of not only the model, but also the constituent modules.
@@ -220,24 +232,24 @@ LayerNorm/RMSNorm & 6.4\% & 7.3\% & 3.2\% & 7.8\% \\
 
 \review{Across model families, Table~\ref{tab:block_errors_combined} shows that Mistral is consistently the most difficult family: 11.01\% module-level MAPE on A6000 and 8.8\% on B40. Its grouped-query attention and SwiGLU blocks alter the mix of compute and communication within each Transformer block. Vicuna, Llama, and Qwen remain lower on both platforms. These results show that \sys{} retains fine-grained accuracy across different module compositions rather than only matching end-to-end totals.}
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
-\small
-\setlength{\tabcolsep}{6pt}
-\renewcommand{\arraystretch}{1.04}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.02}
 \begin{tabular}{lcccl}
 \toprule
-\textbf{Model} & \textbf{A6000 MAPE} & \textbf{B40 MAPE} & \textbf{FLOPs/Block} & \textbf{Modules/Block} \\
+\textbf{Model} & \textbf{A6K} & \textbf{B40} & \textbf{GFLOPs} & \textbf{Block} \\
 \midrule
-\rowcolor{rowblue} Vicuna & 6.28\% & 4.1\% & 187 GFlops & Self-Attn., MLP \\
-Mistral & 11.01\% & 8.8\% & 245 GFlops & GQA, SwiGLU \\
-\rowcolor{rowblue} Llama & 7.93\% & 4.3\% & 203 GFlops & RoPE, RMSNorm \\
-Qwen & 9.03\% & 5.1\% & 213 GFlops & MQA, RoPE \\
+\rowcolor{rowblue} Vicuna  & 6.28\%  & 4.1\% & 187 & Attn., MLP \\
+Mistral                   & 11.01\% & 8.8\% & 245 & GQA, SwiGLU \\
+\rowcolor{rowblue} Llama   & 7.93\%  & 4.3\% & 203 & RoPE, RMSNorm \\
+Qwen                      & 9.03\%  & 5.1\% & 213 & MQA, RoPE \\
 \bottomrule
 \end{tabular}
-\caption{Module-level prediction error across model families on A6000 and B40.}
+\caption{Module-level prediction error across model families. A6K denotes A6000; GFLOPs is per Transformer block.}
 \label{tab:block_errors_combined}
-\end{table*}
+\end{table}
 
 In the rest of the subsections, for brevity, we report results for the A6000 hardware. 
 
