@@ -257,13 +257,15 @@ Across all evaluated configurations, \be{\sys{} achieves the lowest prediction e
 Averaged over all points in Figure~\ref{fig:mape_comparison_other}, \sys{} attains MAPE of 12.2\% under pipeline parallelism and 10.8\% under data parallelism.
 The baselines incur higher error: CodeCarbon and IrEne achieve 29.0\% and 28.3\% MAPE under pipeline parallelism, respectively, and 19.6\% and 15.3\% under data parallelism.
 
-\review{We use tensor parallelism for the full suite of module-level, leave-one-out, hardware, and ablation experiments because it is the most communication-intensive prediction setting: individual operators are sharded across GPUs and collective communication appears repeatedly inside Transformer blocks. Pipeline parallelism instead communicates activations at stage boundaries, while our data-parallel inference setup has less frequent and more structured output communication. The pipeline- and data-parallel experiments therefore test whether the same \sys{} formulation extends to these different communication structures, while the deeper generalization analysis is concentrated on the more challenging tensor-parallel setting.}
+
 
 Pipeline parallel inference incurs recurring inter-GPU data transfers at every stage boundary.
 As the number of GPUs increases (hence more stages), the \emph{frequency} of communication events also increases, making pipeline inference particularly sensitive to unmodeled communication effects.
 As a result CodeCarbon and IrEne exhibit large errors, especially under 4-GPU.
 Data parallel inference, on the other hand, incurs less frequent and more structured communication.
 Thus, the penalty for omitting communication, as in CodeCarbon and IrEne, is smaller than in pipeline parallelism, though still higher than \sys{}.
+
+\review{We use tensor parallelism for the full suite of module-level, leave-one-out, hardware, and ablation experiments because it is the most communication-intensive prediction setting: individual operators are sharded across GPUs and collective communication appears repeatedly inside Transformer blocks. Pipeline parallelism instead communicates activations at stage boundaries, while our data-parallel inference setup has less frequent and more structured output communication. The pipeline- and data-parallel experiments therefore test whether the same \sys{} formulation extends to these different communication structures, while the deeper generalization analysis is concentrated on the more challenging tensor-parallel setting.}
 
 \subsection{Ablation Study: Communication Model}
 \label{sec:ablation_comm_modeling}
