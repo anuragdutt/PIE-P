@@ -1,3 +1,7 @@
+\anurag{add ablated baselines in the main baseline section - and then add a paragraph on the summary of results.}
+\anurag{One sentence to state that we have a full suite for our main results but we use representative experiments for other sections.}
+
+
 \begin{figure*}[!ht]
     \centering
     \includegraphics[width=\textwidth]{figures/mape_all_model_families.pdf}
@@ -21,6 +25,8 @@ across the three widely-employed parallelization strategies (tensor, pipeline, a
 
 \subsection{Evaluation Methodology}
 \label{ss:esetup}
+
+
 We conducted experiments on three hardware platforms:
 (1) NVIDIA RTX A6000;
 (2) NVIDIA B40; and
@@ -255,7 +261,8 @@ In the rest of the subsections, for brevity, we report results for the A6000 har
 
 \subsection{Results for Pipeline and Data Parallelism}
 \label{sec:ppdp}
-
+\anurag{we take into account the small overlaps for mem flushing and cache clearning kernels and we take that - add something in the intro}
+\anurag{For some machines we didn't run everything - address that PIE-P generalizes across hardware and repeating representative experiments}
 \begin{figure*}[!t]
     \centering
     \includegraphics[height=0.22\textwidth,width=0.9\textwidth]{figures/pp_dp_comparison.pdf}
