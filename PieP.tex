@@ -58,9 +58,7 @@ This decomposition into modules can be obtained from existing ML frameworks, inc
 To capture the relationship between energy and the compute and communication modules, \sys{} leverages hardware resource, model execution, and model structural features.
 For example, the \emph{number of attention heads} influences how work is divided across GPUs during tensor parallelization, affecting communication volume in AllReduce operations.
 We thus extract such structural features from the model for parallelized energy prediction; existing utilization- or metrics-based heuristics~\cite{strubell19,Nguyen-hotcarbon,wilkins2024offlineenergyoptimalllmserving} miss out on this critical information. 
-%\anurag{fixing a small typo here}
 
-\anurag{Appendix - C Methodology: Features}
 \begin{table}[t]
 \centering
 \small
@@ -131,7 +129,6 @@ B_{e}^{\mathrm{out}} + B_{e}^{\mathrm{in}}
 \vspace{-2pt}
 \end{equation}
 
-\anurag{Appendix - D Methodology: Details of predicting communication energy}
 Here $o$ denotes the communication operation (e.g., AllReduce or point-to-point transfer), $p$ is the number of GPUs, $\alpha_{o,p}$ captures fixed startup and synchronization overhead, and $\beta_{o,p}$ captures the message-size-dependent transfer cost. For each event we define the per-GPU communication volume as $V_e=B_e^{\mathrm{out}}+B_e^{\mathrm{in}}$. We calibrate the model offline for every communication operation type and GPU count by sweeping communication volumes, recording the observed duration $T_e^{\mathrm{obs}}$, and fitting $T_e^{\mathrm{obs}}=\alpha_{o,p}+\beta_{o,p}V_e$. The corresponding effective bandwidth is $B^{\mathrm{eff}}_{o,p}=1/\beta_{o,p}$. This calibration is performed once per hardware/topology and is then reused by the predictor.
 
 For ring AllReduce, the communication volume follows directly from the ReduceScatter and AllGather phases. If the communicated tensor has size $S_e$ bytes, each GPU sends and receives $(p-1)S_e/p$ bytes in each phase; therefore the total per-GPU communication volume is
@@ -146,7 +143,6 @@ For pipeline-parallel point-to-point transfers, the corresponding activation ten
 \end{equation}
 The resulting communication-module estimate is then composed with the compute-module estimates by the multi-level regressor in \S\ref{ss:design-prediction}.
 
-%\anurag{remove the hat from T here and appendix}
 
 \subsection{Measurement and Data Collection}
 \label{ss:design-measurement}
@@ -155,7 +151,6 @@ The resulting communication-module estimate is then composed with the compute-mo
 We align these communication windows with the system power trace and integrate power over the corresponding intervals to obtain communication-energy measurements for training the communication-module predictor. 
 Effective bandwidth is computed from the observed communication volume and transfer time, and the bytes sent and received are derived directly from the tensor size being communicated.
 
-\anurag{Appendix - B Methodology: Data Collection to predict communication energy}
 \textbf{Tensor parallelism.} We repeatedly profile the ring AllReduce operation instead of relying on a single execution trace. Ranks do not always reach a collective at exactly the same time because of runtime scheduling, cache behavior, and memory-access variation. Consequently, the observed AllReduce interval contains both link activity and synchronization/waiting energy. We collect repeated runs to capture the distribution of leading and lagging GPU behavior across the ReduceScatter and AllGather phases, so that the communication predictor is not trained on one potentially unrepresentative synchronization instance.
 
 \textbf{Pipeline parallelism.} Communication is isolated at every stage boundary. We use \texttt{nsys} timestamps to identify the completion of the last forward kernel on stage $i$ and the start of the first forward kernel on stage $i+1$. The interval between these events is attributed to the point-to-point activation transfer, and system power is integrated over the same interval to obtain the corresponding communication energy. This directly associates the transferred activation tensor with the energy consumed while moving it between the producing and consuming stages.
@@ -171,7 +166,6 @@ As a result, during inference, \sys{} incurs \be{no additional measurement overh
 
 \subsection{Multi-Level Regression}
 \label{ss:design-prediction}
-%%\anurag{fix the Pec annotation and explain the regression bottom up}
 Our methodology for training regressors follows a hierarchical approach, training module-level predictors and then combining them for model-level prediction. 
 As \sys{} obtains features from multiple GPUs, naively learning separate coefficients per GPU does not scale as the number of parameters grows with GPU count.
 Instead, \sys{} computes and employs \emph{statistical aggregates} of the runtime features by computing the mean, standard deviation, min and max values across all GPUs. 

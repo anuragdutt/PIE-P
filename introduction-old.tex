@@ -30,7 +30,6 @@ variability makes both measurement and prediction more challenging.%variability 
 \end{itemize}
 
 
-% \anurag{Discuss if we can say that generalizability for communication is a contribution.}
 
 % Beyond end-to-end accuracy, \textbf{fine-grained accounting} is difficult because measurements are inherently aggregated:
 % the observed energy combines computation, communication, and synchronization-related idle-but-powered time, making it non-trivial to attribute energy to specific model components or parallelism phases without an explicit decomposition.
@@ -122,6 +121,5 @@ We implement \sys{} to predict the energy consumption on a variety of open LLM  
 Our results demonstrate that \sys{} consistently achieves low model-level energy prediction error under tensor parallelism ($\sim$17.6\%), pipeline parallelism ($\sim$15.89\%), and data parallelism ($\sim$14.12\%). 
 % \anshul{Anurag, check above numbers. shouldn't DP error be lower than PP?}
 Compared to the next-best performing baseline, \sys{} typically reduces energy prediction error by 1.5-3$\times$.
-%\anurag{Need to add a statement about ablation study once the sections are finalized}
 %
 We end with a use case that shows how \sys{} can help navigate the trade-off between inference time and energy consumption per token across different model sizes and GPU configurations. We commit to releasing all code and data upon publication.

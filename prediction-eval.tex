@@ -28,7 +28,6 @@ We conducted experiments on three hardware platforms:
 Platform (1) uses an AMD EPYC Milan 7543P 32-core CPU with four A6000 GPUs over PCIe 4.0. Platforms (2) and (3) use an Intel Xeon 6 6530P 32-core CPU with PCIe 4.0 for B40 and NVLink-connected GPUs for H200.
 Ground-truth system power/energy is measured using an external Watts Up Pro monitor (platform~1) and IPMI/BMC power readings (platforms 2,3).
 
-\anurag{Appendix - E Methodology: Training}
 \smallskip\noindent\textbf{Training methodology.} We train \sys{} hierarchically: module-level predictors are learned first and their predictions are then composed into model-level energy. We use 3-fold cross-validation at the module level with a 70\%/30\% train/test split. Each module type (e.g., Self-Attention, MLP, and AllReduce) is sampled $10{,}000$ times to build a robust dataset. A sample is an aggregate measurement formed by running the module $100{,}000$ times under a fixed model and GPU configuration. For every sample, runtime features across the participating GPUs are reduced to their mean, standard deviation, minimum, and maximum values to capture both the overall activity level and cross-GPU imbalance, and these statistics are combined with the structural features in Table~\ref{tab:features}.
 
 We profile batch sizes 8, 16, 32, and 64 and output sequence lengths 512 and 1024. We use DeepSpeed~\cite{deepspeed} for tensor, pipeline, and data-parallel inference. We evaluate generalization using leave-one-out experiments because a useful predictor should transfer to models that were not present in its training measurements. In leave-one-variant-out evaluation, an entire model variant is excluded and predicted using module-level predictors learned from the remaining variants in the same family. In leave-one-family-out evaluation, all variants of one family are excluded from training, providing a stricter test of transfer across model architectures.
@@ -84,7 +83,6 @@ The B40 results in Figure~\ref{fig:b40_mape_tensor_parallelism} show similar tre
 On closer inspection we observe that the \be{performance gap between \sys{} and the baselines widens with increasing parallelization}.
 This is because the energy contribution of AllReduce, due to its ring communication, increases with the number of GPUs; see Figure~\ref{fig:all_reduce_energy}.
 
-\anurag{Appendix - M Additional Results on NVIDIA H200 GPUs}
 We also evaluate \sys{} on 2$\times$ NVIDIA H200 GPUs to test whether the same model-tree decomposition, communication model, and feature set remain useful on a substantially different GPU/interconnect platform. Across the evaluated model variants, model-level MAPE averages 16.8\%, comparable to the A6000 and B40 experiments. Table~\ref{tab:h200_model_results} gives the per-variant results. The larger Llama-70B configuration is the most difficult at 26.53\%, while most other variants remain in the 13-19\% range.
 
 \begin{table}[t]
@@ -135,7 +133,6 @@ LayerNorm/RMSNorm                      & 8.12\% \\
 \end{table}
 
 \subsection{NVML Baseline Results}
-\anurag{Appendix - G Additional results: NVML as a proxy for total energy}
 Table~\ref{tab:nvml_proxy_combined} reports the comparison with the NVML-based full-system energy regressor on A6000. In the direct setting, Vicuna ranges from 29.8-33.4\% MAPE, Mistral from 39.0-44.2\%, Llama from 28.5-31.3\%, and Qwen from 38.0-42.4\%. These errors are substantially larger than \sys{}, showing that GPU-board energy alone is not sufficient to capture host energy, architecture-dependent communication volume, and synchronization behavior.
 
 \begin{table}[t]
@@ -166,7 +163,6 @@ NVML generalization is worse still. When the NVML regressor is trained on the re
 \subsection{Module-Level Energy Prediction Results}
 \sys{}, by design, predicts energy of not only the model, but also the constituent modules.
 
-\anurag{Appendix - J Additional Results: Module-level energy predictions}
 Module-level prediction is useful both for composing model-level energy and for identifying energy bottlenecks. Table~\ref{tab:module_mape_combined} shows the primary Vicuna modules. On A6000, compute-intensive Self-Attention and MLP remain in the 6.6-11.4\% range, while AllReduce is higher at 17.3-19.4\% because its energy contains transfer and synchronization variability. B40 shows the same pattern at lower error, with AllReduce at 11.2-13.1\%.
 
 \begin{table}[t]
@@ -219,7 +215,6 @@ Qwen & 9.03\% & 5.1\% & 213 & MQA, RoPE \\
 We now evaluate whether \sys{} generalizes to models that are excluded from training.
 In leave-one-variant-out evaluation, one model variant (e.g., Vicuna 7B vs.\ Vicuna 33B) is held out and predicted using regressors trained on the remaining variants from the same family.
 
-\anurag{Appendix - I Additional Results: Generalization across variants}
 Table~\ref{tab:variant_generalization_combined} reports the complete leave-one-variant-out results. \sys{} achieves 15.8-24.5\% MAPE on A6000 and 11.8-23.5\% on B40. The larger Mistral and Llama variants are generally more difficult, but the predictor remains stable across model scales. We separately test workload extrapolation across batch sizes: MAPE ranges from 16.89-21.82\% with an average of 19.05\%. Generalizing from batch size 16 to 32 gives 19.33\% average MAPE, while the reverse direction gives 18.77\%, suggesting that the execution and structural features capture workload-energy scaling rather than merely memorizing one operating point.
 
 \begin{table}[t]
@@ -247,7 +242,6 @@ Mistral 48B & 24.52\% & 15.81\% & Qwen 32B & 18.98\% & 13.21\% \\
 
 For family-level generalization, we use a leave-one-family-out setup.
 
-\anurag{Appendix - H Additional Results: Generalization across models}
 Generalizing to an entirely unseen family is harder than holding out one variant because the computation graph, attention mechanism, and module dimensions may all change. We therefore exclude all measurements from one family during training and test the resulting predictor on that family under the same deployment settings. Table~\ref{tab:family_generalization_combined} shows that \sys{} remains substantially more accurate than IrEne on both platforms. On A6000, \sys{} obtains 24.1-27.6\% MAPE compared with 49.3-58.4\% for IrEne; on B40, \sys{} obtains 12.2-23.1\% compared with 62.9-113.3\% for IrEne. %The result indicates that reusable module types and structural features transfer across architectures better than a single-GPU hierarchy that omits communication.
 
 The lower prediction error compared to IrEne demonstrates that reusable module-level predictors, structural features, and explicit communication modeling help \sys{} generalize across unseen LLM families.
@@ -334,10 +328,8 @@ This shows that energy prediction for parallel inference is not simply a model-l
 %\anshul{Anurag, why are below two paras part of this Ablation Study? They seem unrelated, no?}
 \anshul{hmm, still not sure about where to place the ones below. can feature correlation move to end of subsection D to provide further evidence that energy alone isn't enough? if yes, then the rest of this subsection can stay as is with title changed to something like ``Comparison against NeuSight retargeted to energy'' and it could be moved above ablation studies}
 \subsection{Additional Analyses}
-\anurag{Appendix - K Additional Results: Feature correlation analysis}
 \smallskip\noindent\textbf{Feature correlation.} Across Vicuna configurations, total measured energy correlates with NVML GPU energy ($\rho=0.633$-$0.762$), batch size ($\rho=0.735$-$0.737$), execution time ($\rho=0.658$-$0.664$), and memory usage ($\rho=0.656$-$0.663$). These associations motivate using multiple workload and runtime features rather than GPU energy alone.
 
-\anurag{Appendix - L Additional Results: Using Latency Prediction Approaches to Predict Energy}
 \smallskip\noindent\textbf{NeuSight retargeted to energy.} Replacing NeuSight's latency target with energy gives 87.3\% average MAPE on the evaluated Vicuna variants (Table~\ref{tab:neusight_energy_target}). Its latency-oriented features do not explicitly represent system power or inter-GPU communication energy.
 
 \begin{table}[t]

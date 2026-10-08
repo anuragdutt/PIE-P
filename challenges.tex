@@ -33,7 +33,6 @@ There are two key challenges in accurately predicting the energy of parallel inf
 Even in single-GPU inference, compute energy depends on how \emph{each module}'s operator mix maps to GPU execution (e.g., memory behavior), which varies with tensor shapes and hardware/resource characteristics. 
 %The energy traces for 10,000 individual Vicuna inference runs, collected on a NVIDIA A6000 GPU, are visibly noisy as well, as seen in(Figure~\ref{fig:energy-variance}).
 %\anshul{need more details about the experiment, like which model and maybe point to S5x for experimental setup details. also, this figure should maybe go in non-determinism para, like the last para in this section?}
-%\anurag{This is a single-GPU experiment, putting it in communication section seems improper as there is no communication here.}
 %As a result, accurate modeling requires \emph{module-level} predictors that condition on both architecture-derived and resource/runtime features rather than a single aggregate utilization signal. 
 In multi-GPU inference, this is further complicated because each module's computation and data may be divided across GPUs, so the model has to account for the energy consumption of the module at each GPU.
 %%module computation is \be{sharded} across devices, so predicting a module's compute energy requires accounting for the per-rank shard (its local tensor shapes and execution) and then composing these shard-level estimates into an end-to-end module-level energy estimate. \aruna{I dont think I quite understand what this challenge is and how we solve it}
@@ -41,7 +40,6 @@ In multi-GPU inference, this is further complicated because each module's comput
 % Even in single-GPU inference, compute energy is difficult to predict because it is not a simple analytical function of token counts or average utilization. Instead, it depends on how the model’s operator mix maps to GPU execution at a fine granularity: different layers alternate between compute- and memory-bound phases, exhibit different cache reuse and memory-traffic patterns, and trigger different kernel schedules and concurrency across SMs.
 % These effects make energy sensitive to seemingly small changes in tensor shapes (e.g., batch size, prefill vs.\ decode, and sequence-length-dependent activation sizes), and to runtime dynamics such as kernel launch ordering and power-state behavior under bursty workloads.
 % In multi-GPU inference, these compute-side sensitivities persist on each GPU, but become more consequential because small per-GPU compute fluctuations can create \emph{stragglers} that change when synchronization points are reached, thereby affecting end-to-end energy beyond the local compute cost.
-% \anurag{Make the compute energy smaller}
 
 \noindent\textbf{Communication energy.}
 Multi-GPU inference additionally incurs \emph{substantial} energy from inter-GPU communication, including AllReduce in tensor parallelism, point-to-point transfers in pipeline parallelism, and AllGather in data parallelism, which is absent in single-device execution.
@@ -64,7 +62,6 @@ GPUs may lag/lead each other non-deterministically.
 
 %This introduces additional complications due \be{synchronization induced non-determinism} %that directly perturbs communication energy across runs.
 %collective-related GPU/NIC buffer activity begins and when transfer completes across the cluster, and then benchmarking these collectives under the target GPU count and topology to obtain representative energy costs that can be composed with module-level compute predictions.
-% \anurag{I am sure we definitely do this and the design section will reflect this}
 %\arunacomment{This last sentence sounds complicated and it is not clear to me how we are addressing this.}
 %\anshul{I simplified the last sentence a bit, check. this says why direct measurement of comm energy is challenging}
 %\begin{figure}[t]
