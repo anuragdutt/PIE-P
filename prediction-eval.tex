@@ -16,7 +16,7 @@
 \vspace{-9pt}
 \end{figure*}
 
-Our evaluation demonstrates \sys{}'s effectiveness across four LLM model families across varying sizes (7B--70B): Vicuna, Mistral, Llama, and Qwen~\cite{vicuna, jiang2023mistral7b, touvron2023llama, qwen}.
+Our evaluation demonstrates \sys{}'s effectiveness across four LLM model families across varying sizes (7B-70B): Vicuna, Mistral, Llama, and Qwen~\cite{vicuna, jiang2023mistral7b, touvron2023llama, qwen}.
 \review{We evaluate tensor, pipeline, and data parallelism on PCIe- and NVLink-connected GPU platforms.}
 
 \subsection{Evaluation Methodology}
@@ -57,11 +57,11 @@ We omit the software-based estimator of Strubell et al.~\cite{strubell19} as it 
 \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
 \item \review{\textbf{Tensor parallelism:} \sys{} obtains average MAPE of 17.6\% on A6000, 15.5\% on B40, and 16.8\% on the representative H200 evaluation.}
 \item \review{\textbf{Pipeline and data parallelism:} Average MAPE is 12.2\% and 10.8\%, respectively.}
-\item \review{\textbf{Generalization:} Leave-one-variant-out MAPE ranges from 15.8--24.5\% on A6000 and 11.8--23.5\% on B40. Leave-one-family-out MAPE ranges from 24.1--27.6\% and 12.2--23.1\%, respectively.}
+\item \review{\textbf{Generalization:} Leave-one-variant-out MAPE ranges from 15.8-24.5\% on A6000 and 11.8-23.5\% on B40. Leave-one-family-out MAPE ranges from 24.1-27.6\% and 12.2-23.1\%, respectively.}
 \anshul{Anurag, maybe we add separate numbers for each LOO mechanism above as 28\% looks bad}
-\item \review{\textbf{NVML baseline:} NVML-based regression incurs 28.5--44.2\% MAPE on A6000.}
-\item \review{\textbf{Module-level prediction:} Self-Attention and MLP errors remain below 12\% on A6000 and below 9\% on B40; AllReduce incurs 17.3--19.4\% MAPE.}
-\item \review{\textbf{Additional comparisons:} Replacing explicit communication modeling increases MAPE from 12.9\% to 34.0\%. Removing the model tree yields 60.8--115.1\% MAPE, while retargeting NeuSight to energy yields 87.3\% MAPE on the evaluated variants.}
+\item \review{\textbf{NVML baseline:} NVML-based regression incurs 28.5-44.2\% MAPE on A6000.}
+\item \review{\textbf{Module-level prediction:} Self-Attention and MLP errors remain below 12\% on A6000 and below 9\% on B40; AllReduce incurs 17.3-19.4\% MAPE.}
+\item \review{\textbf{Additional comparisons:} Replacing explicit communication modeling increases MAPE from 12.9\% to 34.0\%. Removing the model tree yields 60.8-115.1\% MAPE, while retargeting NeuSight to energy yields 87.3\% MAPE on the evaluated variants.}
 \end{itemize}
 
 %\textbf{Use case:} finally, we use \sys{} to expose the latency--energy trade-off across model sizes and GPU counts, showing how accurate prediction can replace repeated trial-and-error measurements when selecting a deployment.}
@@ -82,7 +82,7 @@ On closer inspection we observe that the \be{performance gap between \sys{} and 
 This is because the energy contribution of AllReduce, due to its ring communication, increases with the number of GPUs; see Figure~\ref{fig:all_reduce_energy}.
 
 \anurag{Appendix - M Additional Results on NVIDIA H200 GPUs}
-We also evaluate \sys{} on 2$\times$ NVIDIA H200 GPUs to test whether the same model-tree decomposition, communication model, and feature set remain useful on a substantially different GPU/interconnect platform. Across the evaluated model variants, model-level MAPE averages 16.8\%, comparable to the A6000 and B40 experiments. Table~\ref{tab:h200_model_results} gives the per-variant results. The larger Llama-70B configuration is the most difficult at 26.53\%, while most other variants remain in the 13--19\% range.
+We also evaluate \sys{} on 2$\times$ NVIDIA H200 GPUs to test whether the same model-tree decomposition, communication model, and feature set remain useful on a substantially different GPU/interconnect platform. Across the evaluated model variants, model-level MAPE averages 16.8\%, comparable to the A6000 and B40 experiments. Table~\ref{tab:h200_model_results} gives the per-variant results. The larger Llama-70B configuration is the most difficult at 26.53\%, while most other variants remain in the 13-19\% range.
 
 \begin{table}[t]
 \centering
@@ -107,7 +107,7 @@ Mistral 48B                   & 17.83\% & Qwen 32B  & 14.90\% \\
 \label{tab:h200_model_results}
 \end{table}
 
-The H200 module-level MAPE values in Table~\ref{tab:h200_module_results} are all single digit, including a 9.25\% MAPE for AllReduce. This provides evidence that the communication-aware component remains effective when moving from PCIe-oriented platforms to the H200's higher-bandwidth NVLink environment. We do not claim a hardware-agnostic predictor---\sys{} is still calibrated per platform---but the same decomposition and feature design are reused without modification.
+The H200 module-level MAPE values in Table~\ref{tab:h200_module_results} are all single digit, including a 9.25\% MAPE for AllReduce. This provides evidence that the communication-aware component remains effective when moving from PCIe-oriented platforms to the H200's higher-bandwidth NVLink environment. We do not claim a hardware-agnostic predictor - \sys{} is still calibrated per platform - but the same decomposition and feature design are reused without modification.
 
 \begin{table}[t]
 \centering
@@ -133,7 +133,7 @@ LayerNorm/RMSNorm                      & 8.12\% \\
 
 \subsection{NVML Baseline Results}
 \anurag{Appendix - G Additional results: NVML as a proxy for total energy}
-Table~\ref{tab:nvml_proxy_combined} reports the comparison with the NVML-based full-system energy regressor on A6000. In the direct setting, Vicuna ranges from 29.8--33.4\% MAPE, Mistral from 39.0--44.2\%, Llama from 28.5--31.3\%, and Qwen from 38.0--42.4\%. These errors are substantially larger than \sys{}, showing that GPU-board energy alone is not sufficient to capture host energy, architecture-dependent communication volume, and synchronization behavior.
+Table~\ref{tab:nvml_proxy_combined} reports the comparison with the NVML-based full-system energy regressor on A6000. In the direct setting, Vicuna ranges from 29.8-33.4\% MAPE, Mistral from 39.0-44.2\%, Llama from 28.5-31.3\%, and Qwen from 38.0-42.4\%. These errors are substantially larger than \sys{}, showing that GPU-board energy alone is not sufficient to capture host energy, architecture-dependent communication volume, and synchronization behavior.
 
 \begin{table}[t]
 \centering
@@ -158,13 +158,13 @@ Mistral 48B & 39.0\% & 51.3\% & Qwen 32B & 38.3\% & 56.5\% \\
 \vspace{-5pt}
 \end{table}
 
-NVML generalization is worse still. When the NVML regressor is trained on the remaining variants in a family and tested on an excluded model, MAPE rises to 47.4--57.3\%, averaging 51.5\%, compared with 15.8--24.5\% for \sys{} on the same A6000 generalization task. The gap becomes larger when the held-out model changes tensor shapes, communication behavior, and non-GPU system energy. We found the same qualitative trend on B40.
+NVML generalization is worse still. When the NVML regressor is trained on the remaining variants in a family and tested on an excluded model, MAPE rises to 47.4-57.3\%, averaging 51.5\%, compared with 15.8-24.5\% for \sys{} on the same A6000 generalization task. The gap becomes larger when the held-out model changes tensor shapes, communication behavior, and non-GPU system energy. We found the same qualitative trend on B40.
 
 \subsection{Module-Level Energy Prediction Results}
 \sys{}, by design, predicts energy of not only the model, but also the constituent modules.
 
 \anurag{Appendix - J Additional Results: Module-level energy predictions}
-Module-level prediction is useful both for composing model-level energy and for identifying energy bottlenecks. Table~\ref{tab:module_mape_combined} shows the primary Vicuna modules. On A6000, compute-intensive Self-Attention and MLP remain in the 6.6--11.4\% range, while AllReduce is higher at 17.3--19.4\% because its energy contains transfer and synchronization variability. B40 shows the same pattern at lower error, with AllReduce at 11.2--13.1\%.
+Module-level prediction is useful both for composing model-level energy and for identifying energy bottlenecks. Table~\ref{tab:module_mape_combined} shows the primary Vicuna modules. On A6000, compute-intensive Self-Attention and MLP remain in the 6.6-11.4\% range, while AllReduce is higher at 17.3-19.4\% because its energy contains transfer and synchronization variability. B40 shows the same pattern at lower error, with AllReduce at 11.2-13.1\%.
 
 \begin{table}[t]
 \centering
@@ -217,7 +217,7 @@ We now evaluate whether \sys{} generalizes to models that are excluded from trai
 In leave-one-variant-out evaluation, one model variant (e.g., Vicuna 7B vs.\ Vicuna 33B) is held out and predicted using regressors trained on the remaining variants from the same family.
 
 \anurag{Appendix - I Additional Results: Generalization across variants}
-Table~\ref{tab:variant_generalization_combined} reports the complete leave-one-variant-out results. \sys{} achieves 15.8--24.5\% MAPE on A6000 and 11.8--23.5\% on B40. The larger Mistral and Llama variants are generally more difficult, but the predictor remains stable across model scales. We separately test workload extrapolation across batch sizes: MAPE ranges from 16.89--21.82\% with an average of 19.05\%. Generalizing from batch size 16 to 32 gives 19.33\% average MAPE, while the reverse direction gives 18.77\%, suggesting that the execution and structural features capture workload-energy scaling rather than merely memorizing one operating point.
+Table~\ref{tab:variant_generalization_combined} reports the complete leave-one-variant-out results. \sys{} achieves 15.8-24.5\% MAPE on A6000 and 11.8-23.5\% on B40. The larger Mistral and Llama variants are generally more difficult, but the predictor remains stable across model scales. We separately test workload extrapolation across batch sizes: MAPE ranges from 16.89-21.82\% with an average of 19.05\%. Generalizing from batch size 16 to 32 gives 19.33\% average MAPE, while the reverse direction gives 18.77\%, suggesting that the execution and structural features capture workload-energy scaling rather than merely memorizing one operating point.
 
 \begin{table}[t]
 \centering
@@ -245,7 +245,7 @@ Mistral 48B & 24.52\% & 15.81\% & Qwen 32B & 18.98\% & 13.21\% \\
 For family-level generalization, we use a leave-one-family-out setup.
 
 \anurag{Appendix - H Additional Results: Generalization across models}
-Generalizing to an entirely unseen family is harder than holding out one variant because the computation graph, attention mechanism, and module dimensions may all change. We therefore exclude all measurements from one family during training and test the resulting predictor on that family under the same deployment settings. Table~\ref{tab:family_generalization_combined} shows that \sys{} remains substantially more accurate than IrEne on both platforms. On A6000, \sys{} obtains 24.1--27.6\% MAPE compared with 49.3--58.4\% for IrEne; on B40, \sys{} obtains 12.2--23.1\% compared with 62.9--113.3\% for IrEne. %The result indicates that reusable module types and structural features transfer across architectures better than a single-GPU hierarchy that omits communication.
+Generalizing to an entirely unseen family is harder than holding out one variant because the computation graph, attention mechanism, and module dimensions may all change. We therefore exclude all measurements from one family during training and test the resulting predictor on that family under the same deployment settings. Table~\ref{tab:family_generalization_combined} shows that \sys{} remains substantially more accurate than IrEne on both platforms. On A6000, \sys{} obtains 24.1-27.6\% MAPE compared with 49.3-58.4\% for IrEne; on B40, \sys{} obtains 12.2-23.1\% compared with 62.9-113.3\% for IrEne. %The result indicates that reusable module types and structural features transfer across architectures better than a single-GPU hierarchy that omits communication.
 
 \aruna{The results show that learning using reusable module types and structural features transfer better across LLM architectures than a single-GPU hierarchy that doesnt take into account communication.}
 
@@ -329,7 +329,7 @@ This shows that energy prediction for parallel inference is not simply a model-l
 \anshul{Anurag, why are below two paras part of this Ablation Study? They seem unrelated, no?}
 \subsection{\review{Additional Analyses}}
 \anurag{Appendix - K Additional Results: Feature correlation analysis}
-\review{\smallskip\noindent\textbf{Feature correlation.} Across Vicuna configurations, total measured energy correlates with NVML GPU energy ($\rho=0.633$--$0.762$), batch size ($\rho=0.735$--$0.737$), execution time ($\rho=0.658$--$0.664$), and memory usage ($\rho=0.656$--$0.663$). These associations motivate using multiple workload and runtime features rather than GPU energy alone.}
+\review{\smallskip\noindent\textbf{Feature correlation.} Across Vicuna configurations, total measured energy correlates with NVML GPU energy ($\rho=0.633$-$0.762$), batch size ($\rho=0.735$-$0.737$), execution time ($\rho=0.658$-$0.664$), and memory usage ($\rho=0.656$-$0.663$). These associations motivate using multiple workload and runtime features rather than GPU energy alone.}
 
 \anurag{Appendix - L Additional Results: Using Latency Prediction Approaches to Predict Energy}
 \review{\smallskip\noindent\textbf{NeuSight retargeted to energy.} Replacing NeuSight's latency target with energy gives 87.3\% average MAPE on the evaluated Vicuna variants (Table~\ref{tab:neusight_energy_target}). Its latency-oriented features do not explicitly represent system power or inter-GPU communication energy.}

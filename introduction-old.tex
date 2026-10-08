@@ -3,7 +3,7 @@
 Scaling model capacity has vastly improved instruction following~\cite{zhang2023instruction}, tool use~\cite{qin2023toolllm}, and reasoning abilities~\cite{xu2025largereasoningmodelssurvey} in many Large Language Models~\footnote{In this work, we consider LLMs to be models with billions of parameters.} (LLMs) including Llama, Olmo, GPT4, Claude, and many others. %~\cite{touvron2023llama,olmo2024,claude2024,openai2023gpt4}. 
 However, these scaling improvements have come at the expense of corresponding \emph{increase in compute and energy costs}.
 Coupled with the widespread adoption and deployments for web scale queries\footnote{OpenAI services have hit a billion queries per day as of April 2025~\cite{chatgpt-stats}.}, these advances also raise \be{LLM inference energy} to staggering levels. 
-Recent estimates show that energy consumption for LLM inference can account for 80--90\% of total energy consumption in certain data centers~\cite{Wenjen_2024}, and the inference energy alone is projected to grow to 1,050 terawatt-hours by 2026~\cite{kakolyris2024sloawaregpufrequencyscaling}.
+Recent estimates show that energy consumption for LLM inference can account for 80-90\% of total energy consumption in certain data centers~\cite{Wenjen_2024}, and the inference energy alone is projected to grow to 1,050 terawatt-hours by 2026~\cite{kakolyris2024sloawaregpufrequencyscaling}.
 Given the environmental and cost considerations of LLM energy use~\cite{strubell19,Jesse-dodge-icml}, it is critical to understand the energy consumption of LLM inference to design energy-efficient models.
 Knowing the \emph{model-level energy} helps developers of LLM-based services make energy-aware choices in terms of model sizes, model optimizations, and parallelization strategies. 
 Knowing the energy consumed by \emph{individual modules} of an LLM can help identify key energy bottlenecks.
@@ -121,7 +121,7 @@ We implement \sys{} to predict the energy consumption on a variety of open LLM  
 
 Our results demonstrate that \sys{} consistently achieves low model-level energy prediction error under tensor parallelism ($\sim$17.6\%), pipeline parallelism ($\sim$15.89\%), and data parallelism ($\sim$14.12\%). 
 % \anshul{Anurag, check above numbers. shouldn't DP error be lower than PP?}
-Compared to the next-best performing baseline, \sys{} typically reduces energy prediction error by 1.5--3$\times$.
+Compared to the next-best performing baseline, \sys{} typically reduces energy prediction error by 1.5-3$\times$.
 %\anurag{Need to add a statement about ablation study once the sections are finalized}
 %
 We end with a use case that shows how \sys{} can help navigate the trade-off between inference time and energy consumption per token across different model sizes and GPU configurations. We commit to releasing all code and data upon publication.

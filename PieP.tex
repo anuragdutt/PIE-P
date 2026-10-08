@@ -95,7 +95,7 @@ GPU energy NVML (Wh) & Number of GPUs\\
 \midrule
 Feed-forward dimension & Transformer blocks\\
 \rowcolor{rowblue} Hidden embedding size & Attention heads\\
-Key--value heads & \\
+Key-value heads & \\
 \midrule
 
 \rowcolor{rowblue}
@@ -110,14 +110,14 @@ Bytes transferred & Effective bandwidth\\
 \label{tab:features}
 \end{table}
 
-Table~\ref{tab:features} summarizes the complete feature set. Resource-utilization features capture system- and device-level activity during module execution, including CPU/GPU utilization, memory utilization, clock frequencies, and memory use. Execution features capture the workload configuration and observed execution cost, including batch size, sequence length, FLOPs per token, execution time, NVML-reported GPU energy, and GPU count. Model-structure features such as feed-forward dimension, Transformer-block count, hidden size, attention-head count, and key--value-head count expose architectural differences that determine tensor shapes and how work is divided across ranks. For communication modules, \sys{} additionally records the amount of data transferred and the effective bandwidth of each inter-GPU event.
+Table~\ref{tab:features} summarizes the complete feature set. Resource-utilization features capture system- and device-level activity during module execution, including CPU/GPU utilization, memory utilization, clock frequencies, and memory use. Execution features capture the workload configuration and observed execution cost, including batch size, sequence length, FLOPs per token, execution time, NVML-reported GPU energy, and GPU count. Model-structure features such as feed-forward dimension, Transformer-block count, hidden size, attention-head count, and key-value-head count expose architectural differences that determine tensor shapes and how work is divided across ranks. For communication modules, \sys{} additionally records the amount of data transferred and the effective bandwidth of each inter-GPU event.
 
 The feature representation is also designed to scale with GPU count. Instead of learning a separate set of coefficients for each physical GPU, \sys{} summarizes runtime features across participating GPUs using the mean, standard deviation, minimum, and maximum. The mean captures the overall activity level, while the spread and extrema expose imbalance and straggler behavior. These aggregates are combined with the static structural and communication features before training the module-specific regressors.
 
 \subsection{Communication Energy Modeling}
 \label{ss:design-communication}
 To model the communication energy introduced by parallel inference, \sys{} first treats inter-GPU communication events as explicit modules in the model tree. 
-For each communication event $e$, we trace the communication tensor sizes and calculate network transfer bytes sent ($B_{e}^{\mathrm{out}}$) and received ($B_{e}^{\mathrm{in}}$) by each GPU and use an offline-calibrated $\alpha$--$\beta$ model~\cite{hockney1988parallel2} to estimate the communication latency as:
+For each communication event $e$, we trace the communication tensor sizes and calculate network transfer bytes sent ($B_{e}^{\mathrm{out}}$) and received ($B_{e}^{\mathrm{in}}$) by each GPU and use an offline-calibrated $\alpha$-$\beta$ model~\cite{hockney1988parallel2} to estimate the communication latency as:
 
 \vspace{-2pt}
 \begin{equation}

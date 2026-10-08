@@ -95,7 +95,7 @@ GPU energy NVML (Wh) & Number of GPUs\\
 \midrule
 Feed-forward dimension & Transformer blocks\\
 \rowcolor{rowblue} Hidden embedding size & Attention heads\\
-Key--value heads & \\
+Key-value heads & \\
 \midrule
 
 \rowcolor{rowblue}
@@ -182,7 +182,7 @@ For communication modules, we additionally collect communication-specific featur
 \section{Methodology: Details of predicting communication energy}
 \label{app:alpha-beta-comm}
 
-Section~\ref{ss:design-communication} introduces the $\alpha$--$\beta$ communication model used by \sys{} in Eq.~\ref{eq:comm-latency-main}. 
+Section~\ref{ss:design-communication} introduces the $\alpha$-$\beta$ communication model used by \sys{} in Eq.~\ref{eq:comm-latency-main}. 
 Here, we provide the details for computing the communication-volume term $\left(B_{e}^{\mathrm{out}} + B_{e}^{\mathrm{in}}\right)$ and the effective-bandwidth parameter $\beta_{o,p}$ used in that equation.
 
 For a communication event $e$ of operation type $o$ running on $p$ GPUs, let $B_{e}^{\mathrm{out}}$ and $B_{e}^{\mathrm{in}}$ denote the bytes sent and received by each GPU. 
@@ -197,7 +197,7 @@ B_{e}^{\mathrm{out}} + B_{e}^{\mathrm{in}} .
 
 We calibrate the effective bandwidth offline for each communication operation $o$ and GPU count $p$. 
 For each calibration run, we record the communication volume $V_e$ and the observed communication time $T_{e}^{\mathrm{obs}}$. 
-We then fit the alpha--beta relation:
+We then fit the alpha-beta relation:
 \vspace{-9pt}
 \begin{equation}
 \label{eq:alpha-beta-calibration}
@@ -670,7 +670,7 @@ Qwen                      & 5.1\% & 213 GFlops & MQA, RoPE \\
 
 Recall that \sys{} not only predicts energy of the model, but also of the underlying modules. Module-level energy prediction helps understand the energy bottlenecks. In this section, we evaluate the \sys{} module-level prediction errors. 
 
-Table~\ref{tab:module_mape_comparison} shows the module-level energy prediction MAPE achieved by \sys{} for the primary modules of Vicuna on A6000. For both 2-GPU and 4-GPU configurations, \sys{} achieves low errors for the compute-intensive Self-Attention (8.8--11.4\%) and MLP modules (6.6--9.5\%). For the communication-intensive AllReduce, the MAPE afforded by \sys{} is relatively higher (17.3--19.4\%) owing to the greater variance in inter-GPU communication overheads and non-deterministic delays; nonetheless, the prediction errors. %remain reasonable for reliable modeling (see Appendix~\ref{app:module_mape} for implementation).
+Table~\ref{tab:module_mape_comparison} shows the module-level energy prediction MAPE achieved by \sys{} for the primary modules of Vicuna on A6000. For both 2-GPU and 4-GPU configurations, \sys{} achieves low errors for the compute-intensive Self-Attention (8.8-11.4\%) and MLP modules (6.6-9.5\%). For the communication-intensive AllReduce, the MAPE afforded by \sys{} is relatively higher (17.3-19.4\%) owing to the greater variance in inter-GPU communication overheads and non-deterministic delays; nonetheless, the prediction errors. %remain reasonable for reliable modeling (see Appendix~\ref{app:module_mape} for implementation).
 Table~\ref{tab:b40_module_mape_comparison} shows the results on the B40 hardware, where we find similar trends.
 
 Table~\ref{tab:transformer_block_errors} and ~\ref{tab:b40_transformer_block_errors} show the module level errors across model families for the A6000 and B40 hardware, respectively. Across each model family, \sys{} is able to predict the module energy consumption with less than 5\% errors on B40 and less than 10\% error on A6000. Mistral does have high MAPE in both hardware because of the complexity of the model. Mistral uses a grouped-query attention mechanism and SwiGLU activation, which generates more complex communication patterns during synchronization.
@@ -701,7 +701,7 @@ To assess the influence of different input features on total energy consumption,
 GPU energy reported by NVML exhibits a strong correlation with total energy ($\rho$ between $0.633$ and $0.762$), as expected since GPU computation dominates energy consumption in LLMs. 
 However, other features also show substantial correlations with total energy consumption. Runtime features are particularly strongly correlated with total energy, with batch size ($\rho$ between $0.735$ and $0.737$), execution time ($\rho$ between $0.658$ and $0.664$), and Memory ($\rho$ between $0.656$ and $0.663$) all showing strong correlations. 
 
-These results further demonstrate that apart from GPU energy other system-level utilization metrics also capture critical aspects of energy consumption—particularly in tensor-parallel configurations where communication and synchronization overheads are significant. 
+These results further demonstrate that apart from GPU energy other system-level utilization metrics also capture critical aspects of energy consumption - particularly in tensor-parallel configurations where communication and synchronization overheads are significant. 
 
 
 
@@ -790,7 +790,7 @@ Vicuna 13B                    & 93.24\% \tabularnewline
 \end{table}
 
 Table~\ref{tab:neusight_energy_target} shows that directly substituting energy as the prediction target performs poorly, with an average MAPE of 87.3\%. 
-This corresponds to roughly $\sim$3--5$\times$ worse prediction accuracy than \sys{} and $\sim$1--2$\times$ worse accuracy than the least accurate energy-prediction baseline in our evaluation. 
+This corresponds to roughly $\sim$3-5$\times$ worse prediction accuracy than \sys{} and $\sim$1-2$\times$ worse accuracy than the least accurate energy-prediction baseline in our evaluation. 
 This result shows that energy prediction is not simply latency prediction with a different target label. 
 Latency-oriented features capture how long kernels execute, but they do not sufficiently capture the power dynamics, communication overheads, and synchronization effects that determine total system energy during parallel inference.
 
