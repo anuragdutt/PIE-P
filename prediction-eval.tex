@@ -247,6 +247,8 @@ For family-level generalization, we use a leave-one-family-out setup.
 \anurag{Appendix - H Additional Results: Generalization across models}
 Generalizing to an entirely unseen family is harder than holding out one variant because the computation graph, attention mechanism, and module dimensions may all change. We therefore exclude all measurements from one family during training and test the resulting predictor on that family under the same deployment settings. Table~\ref{tab:family_generalization_combined} shows that \sys{} remains substantially more accurate than IrEne on both platforms. On A6000, \sys{} obtains 24.1-27.6\% MAPE compared with 49.3-58.4\% for IrEne; on B40, \sys{} obtains 12.2-23.1\% compared with 62.9-113.3\% for IrEne. %The result indicates that reusable module types and structural features transfer across architectures better than a single-GPU hierarchy that omits communication.
 
+\review{The lower prediction error compared to IrEne demonstrates that reusable module-level predictors, structural features, and explicit communication modeling help \sys{} generalize across unseen LLM families.}
+
 \aruna{The results show that learning using reusable module types and structural features transfer better across LLM architectures than a single-GPU hierarchy that doesnt take into account communication.}
 
 \begin{table}[t]
