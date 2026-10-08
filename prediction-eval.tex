@@ -13,7 +13,7 @@
 \vspace{-24pt}
 \caption{MAPE results across model families for \sys{} and the baselines under tensor parallelism on B40.}
 \label{fig:b40_mape_tensor_parallelism}
-\vspace{-18pt}
+\vspace{-12pt}
 \end{figure*}
 
 Our evaluation demonstrates \sys{}'s effectiveness across four LLM model families across varying sizes (7B--70B): Vicuna, Mistral, Llama, and Qwen~\cite{vicuna, jiang2023mistral7b, touvron2023llama, qwen}.
@@ -31,9 +31,13 @@ Ground-truth system power/energy is measured using an external Watts Up Pro moni
 \anurag{Appendix - E Methodology: Training}
 \review{\smallskip\noindent\textbf{Training methodology.} We train \sys{} hierarchically: module-level predictors are learned first and their predictions are then composed into model-level energy. We use 3-fold cross-validation at the module level with a 70\%/30\% train/test split. Each module type (e.g., Self-Attention, MLP, and AllReduce) is sampled $10{,}000$ times to build a robust dataset. A sample is an aggregate measurement formed by running the module $100{,}000$ times under a fixed model and GPU configuration. For every sample, runtime features across the participating GPUs are reduced to their mean, standard deviation, minimum, and maximum values to capture both the overall activity level and cross-GPU imbalance, and these statistics are combined with the structural features in Table~\ref{tab:features}.}
 
-\review{To expose the predictors to different operating regimes, we profile batch sizes 8, 16, 32, and 64 and output sequence lengths 512 and 1024. We use DeepSpeed~\cite{deepspeed} for tensor-, pipeline-, and data-parallel inference. We evaluate generalization using leave-one-out experiments because a useful predictor should transfer to models that were not present in its training measurements. In leave-one-variant-out evaluation, an entire model variant is excluded and predicted using module-level predictors learned from the remaining variants in the same family. In leave-one-family-out evaluation, all variants of one family are excluded from training, providing a stricter test of transfer across model architectures.}
+\review{We profile batch sizes 8, 16, 32, and 64 and output sequence lengths 512 and 1024. We use DeepSpeed~\cite{deepspeed} for tensor, pipeline, and data-parallel inference. We evaluate generalization using leave-one-out experiments because a useful predictor should transfer to models that were not present in its training measurements. In leave-one-variant-out evaluation, an entire model variant is excluded and predicted using module-level predictors learned from the remaining variants in the same family. In leave-one-family-out evaluation, all variants of one family are excluded from training, providing a stricter test of transfer across model architectures.}
 
-\review{Our primary tensor-parallel evaluation covers the complete model suite on the A6000 and B40 platforms. We then use representative H200 experiments to test whether the same decomposition and feature design continue to work on a different GPU/interconnect platform. We do not repeat the complete Cartesian product of every model and every experiment on every hardware platform; instead, the full A6000/B40 suite establishes the main result, while representative experiments test the specific cross-hardware and cross-model generalization dimensions without duplicating otherwise redundant results.}
+\anshul{Aruna, check the below para from Anurag. Looks ok to me; only thing is we could remove the ``We do not repeat the complete Cartesian product of every model and every experiment on every hardware platform; instead, '' part.
+Aruna: I made it a bit simpler but maintained the overall structure}
+\review{Our primary tensor-parallel evaluation covers the complete model suite on the A6000 and B40 platforms. We then repeat the experiments on the H200 hardware for a representative subset to test whether our system works on a different GPU/interconnect platform. %We do not repeat the complete Cartesian product of every model and every experiment on every hardware platform; instead, the full A6000/B40 suite establishes the main result, 
+We also evaluate specific cross-hardware and cross-model generalization on a representative subset of models and parallelization techniques. %without duplicating otherwise redundant results.
+}
 
 \smallskip\noindent\textbf{Baselines and comparison configurations.} We compare \sys{} against external prediction/measurement baselines together with controlled configurations that isolate the contribution of its design choices. \\
 \noindent\textbf{\be{IrEne}~\cite{irene}:} A hierarchical energy prediction framework for single-GPU execution and the closest methodological baseline to \sys{}. IrEne represents execution at mathematical-operation, machine-learning-operation, and module levels, learns leaf-level energy predictors from runtime resource utilization and model specifications, and recursively combines child predictions to obtain higher-level energy estimates. We use IrEne in the same inference configurations as \sys{}; its key limitation for our setting is that the hierarchy does not represent inter-GPU communication as a first-class module. \\
@@ -42,18 +46,31 @@ Ground-truth system power/energy is measured using an external Watts Up Pro moni
 \textbf{\be{NVML}~\cite{nvml}:} A widely used software source of GPU power/energy telemetry~\cite{strubell19,luccioni2022estimatingcarbonfootprintbloom,Jesse-dodge-icml}. To test whether GPU-only energy is sufficient to predict full-system energy, we train a model-level linear regressor with NVML-reported GPU energy as the independent variable and the wall-meter/IPMI measurement as the prediction target. \\
 \textbf{\be{\sys{} without explicit communication modeling}:} This configuration retains the model-tree decomposition and compute-module predictors, but replaces \sys{}'s communication model with a simpler estimate that multiplies an average observed AllReduce power by the duration of each collective. It directly tests whether explicitly modeling communication as a volume- and topology-dependent module is necessary. \\
 \textbf{\be{\sys{} without model-tree decomposition}:} We remove the module-level hierarchy and train a single model-level regressor from aggregate features. This comparison isolates whether fine-grained decomposition is needed beyond simply supplying the same broad classes of signals to one predictor. \\
-\textbf{\be{NeuSight-style energy predictor}~\cite{neusight}:} We retain NeuSight's fine-grained matrix-tile decomposition, FLOP/memory features, and MLP prediction structure, but replace latency with measured system energy as the target. This tests whether a representation designed for latency prediction can be directly retargeted to energy.
+\aruna{Anurag, I think you misunderstood. The two PIE-P versions above are ablations, we dont need them here. But we should add where we compare PIE-P with Irene + network measurement}
+\textbf{\be{NeuSight-style energy predictor}~\cite{neusight}:} As discussed earlier, Neusight is designed to predict latency. Instead, we retain NeuSight's fine-grained matrix-tile decomposition, FLOP/memory features, and MLP prediction structure, but replace latency with energy as the target. This tests whether a model designed for latency prediction can be retargeted to energy.
 
 We omit the software-based estimator of Strubell et al.~\cite{strubell19} as it is outperformed by baselines such as IrEne~\cite{irene}.
 
-\review{\smallskip\noindent\textbf{Summary of results.}
-\textbf{Tensor-parallel prediction:} this is our main and most demanding evaluation because operators are sharded across GPUs and collectives recur inside Transformer blocks; \sys{} achieves 17.6\% average MAPE on A6000 and 15.5\% on B40, with representative H200 experiments averaging 16.8\% and showing that the same decomposition remains effective on an NVLink platform.
-\textbf{NVML baseline:} we test whether GPU-only telemetry is sufficient for full-system energy prediction; direct NVML-based regression spans 28.5--44.2\% MAPE on A6000 and degrades further under leave-one-variant-out generalization, showing that GPU energy alone does not capture the full system and communication effects.
-\textbf{Module-level prediction:} we verify that end-to-end accuracy is supported by accurate constituent predictions; Self-Attention and MLP remain below 12\% MAPE on A6000 and below 9\% on B40, while AllReduce is the most variable module.
-\textbf{Generalization:} leave-one-variant-out and leave-one-family-out experiments test transfer to unseen model scales and architectures; \sys{} remains below 28\% MAPE across these held-out settings and substantially outperforms IrEne.
-\textbf{Pipeline and data parallelism:} we test whether the same formulation extends to different communication structures and obtain 12.2\% and 10.8\% average MAPE, respectively.
-\textbf{Ablations and alternative predictors:} removing explicit communication modeling increases MAPE from 12.9\% to 34.0\%, removing the model-tree decomposition produces 60.8--115.1\% MAPE, and the NeuSight-style energy predictor averages 87.3\% MAPE, demonstrating that both communication modeling and the hierarchical, energy-specific representation are necessary.
-\textbf{Use case:} finally, we use \sys{} to expose the latency--energy trade-off across model sizes and GPU counts, showing how accurate prediction can replace repeated trial-and-error measurements when selecting a deployment.}
+\review{
+\aruna{This is very good, but just feels a little ChatGPT-ish, especually the first paragraph}
+\subsection{Summary of results}
+%\review{\smallskip\noindent\textbf{Summary of results.}
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+\item\textbf{Tensor-parallel prediction:} this is our main and most demanding evaluation because operators are sharded across GPUs and collectives recur inside Transformer blocks; \sys{} achieves 15.5\%--17.6\% average MAPE 
+on A6000, B40, and H200 platforms, highlighting its effectiveness on PCIe and NVLink connected GPUs.
+%on A6000 and 15.5\% on B40, with representative H200 experiments averaging 16.8\% and showing that the same decomposition remains effective on an NVLink platform.
+\item\textbf{Pipeline and data parallelism:} \sys{} extends to different parallelism/communication structures, obtaining 12.2\% and 10.8\% average MAPE, respectively.
+\item\textbf{Generalization:} leave-one-variant-out and leave-one-family-out experiments test transfer to unseen model scales and architectures; \sys{} remains below 28\% MAPE across these held-out settings and substantially outperforms IrEne.
+\anshul{Anurag, maybe we add separate numbers for each LOO mechanism above as 28\% looks bad}
+\item\textbf{NVML baseline:} we find that GPU-only telemetry is insufficient for full-system energy prediction; direct NVML-based regression incurs 28.5--44.2\% MAPE on A6000 and degrades further under leave-one-variant-out generalization.
+%, showing that GPU energy alone does not capture the full system and communication effects.
+\item\textbf{Module-level prediction:} we verify \sys{}'s granular energy prediction capabilities; Self-Attention and MLP module energy predictions remain below 12\% MAPE on A6000 and below 9\% on B40, while the more variable AllReduce module incurs a MAPE of 17.3--19.4\%.
+%is the most variable module.
+%\textbf{Pipeline and data parallelism:} we test whether the same formulation extends to different communication structures and obtain 12.2\% and 10.8\% average MAPE, respectively.
+\item\textbf{Ablations and alternative predictors:} removing explicit communication modeling in \sys{} increases MAPE from 12.9\% to 34.0\%, removing the model-tree decomposition incurs 60.8--115.1\% MAPE, and the NeuSight-style energy predictor averages 87.3\% MAPE, demonstrating that both communication modeling and hierarchical, energy-specific representation are necessary for accurate energy prediction.
+\end{itemize}
+}
+%\textbf{Use case:} finally, we use \sys{} to expose the latency--energy trade-off across model sizes and GPU counts, showing how accurate prediction can replace repeated trial-and-error measurements when selecting a deployment.}
 
 \subsection{Energy Prediction for Tensor Parallelism}
 \label{sec:model_prediction}
@@ -91,11 +108,12 @@ Mistral 48B                   & 17.83\% & Qwen 32B  & 14.90\% \\
 \bottomrule
 \end{tabular}
 \vspace{3pt}
-\caption{Model-level prediction results for \sys{} on 2$\times$ NVIDIA H200 GPUs.}
+\caption{Model-level results for \sys{} on 2$\times$ NVIDIA H200 GPUs.}
+\vspace{-6pt}
 \label{tab:h200_model_results}
 \end{table}
 
-\review{The H200 module-level results in Table~\ref{tab:h200_module_results} are all single digit, including a 9.25\% MAPE for AllReduce. This provides evidence that the communication-aware component remains effective when moving from PCIe-oriented platforms to the H200's higher-bandwidth NVLink environment. We do not claim a hardware-agnostic predictor---\sys{} is still calibrated per platform---but the same decomposition and feature design are reused without modification.}
+\review{The H200 module-level MAPE values in Table~\ref{tab:h200_module_results} are all single digit, including a 9.25\% MAPE for AllReduce. This provides evidence that the communication-aware component remains effective when moving from PCIe-oriented platforms to the H200's higher-bandwidth NVLink environment. We do not claim a hardware-agnostic predictor---\sys{} is still calibrated per platform---but the same decomposition and feature design are reused without modification.}
 
 \begin{table}[t]
 \centering
@@ -115,6 +133,7 @@ LayerNorm/RMSNorm                      & 8.12\% \\
 \end{tabular}
 \vspace{3pt}
 \caption{Module-level MAPE for \sys{} on NVIDIA H200 GPUs.}
+\vspace{-12pt}
 \label{tab:h200_module_results}
 \end{table}
 
@@ -232,7 +251,9 @@ Mistral 48B & 24.52\% & 15.81\% & Qwen 32B & 18.98\% & 13.21\% \\
 For family-level generalization, we use a leave-one-family-out setup.
 
 \anurag{Appendix - H Additional Results: Generalization across models}
-\review{Generalizing to an entirely unseen family is harder than holding out one variant because the computation graph, attention mechanism, and module dimensions may all change. We therefore exclude all measurements from one family during training and test the resulting predictor on that family under the same deployment settings. Table~\ref{tab:family_generalization_combined} shows that \sys{} remains substantially more accurate than IrEne on both platforms. On A6000, \sys{} obtains 24.1--27.6\% MAPE compared with 49.3--58.4\% for IrEne; on B40, \sys{} obtains 12.2--23.1\% compared with 62.9--113.3\% for IrEne. The result indicates that reusable module types and structural features transfer across architectures better than a single-GPU hierarchy that omits communication.}
+\review{Generalizing to an entirely unseen family is harder than holding out one variant because the computation graph, attention mechanism, and module dimensions may all change. We therefore exclude all measurements from one family during training and test the resulting predictor on that family under the same deployment settings. Table~\ref{tab:family_generalization_combined} shows that \sys{} remains substantially more accurate than IrEne on both platforms. On A6000, \sys{} obtains 24.1--27.6\% MAPE compared with 49.3--58.4\% for IrEne; on B40, \sys{} obtains 12.2--23.1\% compared with 62.9--113.3\% for IrEne. %The result indicates that reusable module types and structural features transfer across architectures better than a single-GPU hierarchy that omits communication.
+}
+\aruna{The results show that learning using reusable module types and structural features transfer better across LLM architectures than a single-GPU hierarchy that doesnt take into account communication.}
 
 \begin{table}[t]
 \centering
@@ -284,6 +305,7 @@ As a result CodeCarbon and IrEne exhibit larger errors, especially under 4-GPU c
 Data parallel inference, on the other hand, incurs less frequent and more structured communication.
 Thus, the penalty for omitting communication, as in CodeCarbon and IrEne, is smaller than in pipeline parallelism, though still higher than \sys{}.
 
+\aruna{I guess this can be combined with the discussion earlier on using representative models. Not sure if we need a repeat. Anshul?}
 \review{We use tensor parallelism for the full suite of module-level, leave-one-out, hardware, and ablation experiments because it is the most communication-intensive prediction setting: individual operators are sharded across GPUs and collective communication appears repeatedly inside Transformer blocks. Pipeline parallelism instead communicates activations at stage boundaries, while our data-parallel inference setup has less frequent and more structured output communication. The pipeline- and data-parallel experiments therefore test whether the same \sys{} formulation extends to these different communication structures, while the deeper generalization analysis is concentrated on the more challenging tensor-parallel setting.}
 
 \subsection{Ablation Study: Communication Model}
@@ -311,6 +333,7 @@ We next evaluate the model-level regression comparison described in \S\ref{ss:es
 We find that directly predicting total model energy leads to substantially higher errors: the MAPE increases to 61.2\% for Vicuna, 84.3\% for Mistral, 115.1\% for Llama, and 60.8\% for Qwen.
 This shows that energy prediction for parallel inference is not simply a model-level regression problem. Runtime features vary significantly across compute-heavy modules (e.g., Attention, MLP) and communication-heavy modules (e.g., AllReduce). Collapsing these effects into a single aggregate feature loses this structure and causes the predictor to mix heterogeneous sources of energy variation.
 
+\anshul{Anurag, why are below two paras part of this Ablation Study? They seem unrelated, no?}
 \anurag{Appendix - K Additional Results: Feature correlation analysis}
 \review{\smallskip\noindent\textbf{Feature-correlation analysis.} To assess whether the feature set contributes information beyond one GPU-energy signal, we compute Spearman rank correlations between the candidate features and total measured energy across Vicuna configurations. NVML GPU energy is strongly correlated with total energy ($\rho=0.633$--$0.762$), as expected because GPU computation is a major contributor. However, several non-NVML features are similarly informative: batch size has $\rho=0.735$--$0.737$, execution time has $\rho=0.658$--$0.664$, and memory usage has $\rho=0.656$--$0.663$. Thus, workload size, execution duration, memory activity, and GPU energy all contribute signal; in multi-GPU execution, communication volume and synchronization further perturb these relationships. This supports the multi-feature design rather than a single utilization or telemetry scalar.}
 

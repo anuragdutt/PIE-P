@@ -24,7 +24,7 @@ Finally, \sys{} builds a multi-level regressor to combine these contributions to
 \vspace{-9pt}
 \caption{\sys{} architecture showing: (1) parallelism-aware decomposition, (2) features for module-level prediction, (3) communication energy modeling, (4) measurement and data collection, and (5) multi-level regression.}
 \label{fig:piep_architecture}
-\vspace{-18pt}
+\vspace{-9pt}
 \end{figure*}
 
 
@@ -57,7 +57,8 @@ This decomposition into modules can be obtained from existing ML frameworks, inc
 
 To capture the relationship between energy and the compute and communication modules, \sys{} leverages hardware resource, model execution, and model structural features.
 For example, the \emph{number of attention heads} influences how work is divided across GPUs during tensor parallelization, affecting communication volume in AllReduce operations.
-We thus extract such structural features from the model for parallelized energy prediction; existing utilization- or metrics-based heuristics~\cite{strubell19,Nguyen-hotcarbon,wilkins2024offlineenergyoptimalllmserving} miss out on this critical information. \anurag{fixing a small typo here}
+We thus extract such structural features from the model for parallelized energy prediction; existing utilization- or metrics-based heuristics~\cite{strubell19,Nguyen-hotcarbon,wilkins2024offlineenergyoptimalllmserving} miss out on this critical information. 
+%\anurag{fixing a small typo here}
 
 \anurag{Appendix - C Methodology: Features}
 \begin{table}[t]
@@ -103,8 +104,9 @@ Key--value heads & \\
 Bytes transferred & Effective bandwidth\\
 \bottomrule
 \end{tabular}
-
+\vspace{3pt}
 \caption{Features used by \sys{} for prediction.}
+\vspace{-15pt}
 \label{tab:features}
 \end{table}
 

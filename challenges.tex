@@ -2,8 +2,8 @@
     \centering
     \includegraphics[width=\textwidth]{figures/llm_energy_comparison.pdf}
     \vspace{-24pt}
-    \caption{Energy consumption across models and GPU configurations (2- and 4-GPU runs use tensor parallelism). Bars show total model energy; lighter segments show AllReduce communication energy (\% shown) and darker segments show remaining computation energy. Missing bars denote cases where model did not fit in GPU memory.} 
-    \vspace{-15pt}
+    \caption{Energy consumption across models and GPU configurations (2- and 4-GPU runs use tensor parallelism). Bars show total model energy; lighter segments show AllReduce communication energy (\% shown) and darker segments show remaining computation energy. Missing bars denote cases where model did not fit in GPU memory.\anshul{do revisit space below figures and tables at the end as some have too much space and some are too tightly placed with text.}} 
+    \vspace{-9pt}
     \label{fig:all_reduce_energy}
 \end{figure*}
 
@@ -16,16 +16,17 @@ There are three main parallelism strategies that are widely used for LLM inferen
     \item \textbf{Tensor parallelism} splits individual model computations (such as matrix multiplications) across multiple GPUs to enable parallel execution of operations~\cite{megatron}.
 \end{enumerate}
 
-\review{Tensor, pipeline, and data parallelism expose distinct communication patterns. In tensor parallelism, GPUs jointly execute operations within a layer, so partial results must be exchanged and combined using collectives such as AllReduce. Because these collectives occur repeatedly throughout the forward pass, communication is closely coupled with computation and synchronization.}
+\noindent \review{Tensor, pipeline, and data parallelism expose distinct communication patterns. In tensor parallelism, GPUs jointly execute operations within a layer, so partial results must be exchanged and combined using collectives such as AllReduce. Because these collectives occur repeatedly throughout the forward pass, communication is closely coupled with computation and synchronization.}
 
 \review{Pipeline parallelism partitions layers across stages, and each stage sends its output activations to the next stage using point-to-point communication. Communication therefore occurs primarily at stage boundaries as activations move through the pipeline.}
 
 \review{In data parallelism, each replica independently executes the full model on a different portion of the workload. Communication is therefore limited during the forward computation, with collective operations such as AllGather used when outputs from multiple replicas need to be consolidated.}
-
+\aruna{should we say something about other parallelism such as hybrid, FSDP etc and say our work can be potentially extended to them but we leave it to future work?}
 %Our framework can be extended to other strategies such as hybrid parallelism that combines existing parallelism methods; we leave this to future work.
 %\medskip
 %\subsection*{Challenges in predicting parallel inference energy}
 
+\medskip
 There are two key challenges in accurately predicting the energy of parallel inference strategies.
 
 \noindent\textbf{Compute energy.}
