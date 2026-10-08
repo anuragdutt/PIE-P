@@ -85,7 +85,7 @@ To this end, \sys{} makes the following contributions:
     \item 
 \emph{Communication Energy Profiling} by treating inter-GPU communication events as individual modules in the model-tree abstraction and learning their energy use via benchmarking.
     \item \emph{Use of Structural Model Features}, such as number of attention heads, to capture the relationship between model architecture and communication patterns when using different parallelisms.
-    \item \review{\emph{Communication-Aware Prediction} to account for parallelization-induced communication overheads by modeling inter-GPU collective latency as a function of fixed communication latency, effective bandwidth, and the bytes sent/received, and using the predicted communication time to estimate the corresponding AllReduce energy contribution.}
+    \item {\emph{Communication-Aware Prediction} to account for parallelization-induced communication overheads by modeling inter-GPU collective latency as a function of fixed communication latency, effective bandwidth, and the bytes sent/received, and using the predicted communication time to estimate the corresponding AllReduce energy contribution.}
     \item \emph{Aggregate Runtime Feature Representation} to scalably and concisely represent the features of multiple GPUs
     based on aggregates of their runtime features. 
 \end{enumerate}
@@ -104,7 +104,7 @@ parallelism. % with tensor parallelism serving as the primary evaluation setting
 %because it introduces the most challenging communication and synchronization overheads.
 Our results demonstrate that \sys{} consistently achieves low model-level energy prediction error under tensor parallelism ($\sim$11.8\%), pipeline parallelism ($\sim$12.2\%), and data parallelism ($\sim$10.8\%).
 
-We compare \sys{} against existing prediction frameworks, CodeCarbon~\cite{codecarbon},  Wilkins et al.~\cite{wilkins2024offlineenergyoptimalllmserving}, and IrEne~\cite{irene}, as well as using NVML~\cite{nvml}, a popular energy software-based energy measurement tool. 
+\review{We compare \sys{} with CodeCarbon~\cite{codecarbon}, Wilkins et al.~\cite{wilkins2024offlineenergyoptimalllmserving}, IrEne~\cite{irene}, NVML-based regression~\cite{nvml}, NeuSight adapted to predict energy~\cite{neusight}, and IrEne augmented with historical communication-energy measurements.} 
  \aruna{We also compare \sys{} against Neusight~\cite{neusight}, which we modify to predict energy rather than its original latency objective, as well as an extended version of IrEne that accounts for network energy based on historical measurement data.} Compared to the next-best performing baseline, \sys{} typically reduces energy prediction error by 1.5--3$\times$.
 We also show that \sys{} generalizes to unseen models and accurately predicts module-level energy consumption, and we conduct ablation studies to analyze its behavior.
 We end with a use case that shows how \sys{} can help navigate the trade-off between inference time and energy consumption across different model sizes and GPU configurations. We commit to releasing all code and data upon publication.

@@ -106,13 +106,13 @@ Bytes transferred & Effective bandwidth\\
 \end{tabular}
 \vspace{3pt}
 \caption{Features used by \sys{} for prediction.}
-\vspace{-15pt}
+\vspace{-9pt}
 \label{tab:features}
 \end{table}
 
-\review{Table~\ref{tab:features} summarizes the complete feature set. Resource-utilization features capture system- and device-level activity during module execution, including CPU/GPU utilization, memory utilization, clock frequencies, and memory use. Execution features capture the workload configuration and observed execution cost, including batch size, sequence length, FLOPs per token, execution time, NVML-reported GPU energy, and GPU count. Model-structure features such as feed-forward dimension, Transformer-block count, hidden size, attention-head count, and key--value-head count expose architectural differences that determine tensor shapes and how work is divided across ranks. For communication modules, \sys{} additionally records the amount of data transferred and the effective bandwidth of each inter-GPU event.}
+Table~\ref{tab:features} summarizes the complete feature set. Resource-utilization features capture system- and device-level activity during module execution, including CPU/GPU utilization, memory utilization, clock frequencies, and memory use. Execution features capture the workload configuration and observed execution cost, including batch size, sequence length, FLOPs per token, execution time, NVML-reported GPU energy, and GPU count. Model-structure features such as feed-forward dimension, Transformer-block count, hidden size, attention-head count, and key--value-head count expose architectural differences that determine tensor shapes and how work is divided across ranks. For communication modules, \sys{} additionally records the amount of data transferred and the effective bandwidth of each inter-GPU event.
 
-\review{The feature representation is also designed to scale with GPU count. Instead of learning a separate set of coefficients for each physical GPU, \sys{} summarizes runtime features across participating GPUs using the mean, standard deviation, minimum, and maximum. The mean captures the overall activity level, while the spread and extrema expose imbalance and straggler behavior. These aggregates are combined with the static structural and communication features before training the module-specific regressors.}
+The feature representation is also designed to scale with GPU count. Instead of learning a separate set of coefficients for each physical GPU, \sys{} summarizes runtime features across participating GPUs using the mean, standard deviation, minimum, and maximum. The mean captures the overall activity level, while the spread and extrema expose imbalance and straggler behavior. These aggregates are combined with the static structural and communication features before training the module-specific regressors.
 
 \subsection{Communication Energy Modeling}
 \label{ss:design-communication}
@@ -132,9 +132,9 @@ B_{e}^{\mathrm{out}} + B_{e}^{\mathrm{in}}
 \end{equation}
 
 \anurag{Appendix - D Methodology: Details of predicting communication energy}
-\review{Here $o$ denotes the communication operation (e.g., AllReduce or point-to-point transfer), $p$ is the number of GPUs, $\alpha_{o,p}$ captures fixed startup and synchronization overhead, and $\beta_{o,p}$ captures the message-size-dependent transfer cost. For each event we define the per-GPU communication volume as $V_e=B_e^{\mathrm{out}}+B_e^{\mathrm{in}}$. We calibrate the model offline for every communication operation type and GPU count by sweeping communication volumes, recording the observed duration $T_e^{\mathrm{obs}}$, and fitting $T_e^{\mathrm{obs}}=\alpha_{o,p}+\beta_{o,p}V_e$. The corresponding effective bandwidth is $B^{\mathrm{eff}}_{o,p}=1/\beta_{o,p}$. This calibration is performed once per hardware/topology and is then reused by the predictor.}
+Here $o$ denotes the communication operation (e.g., AllReduce or point-to-point transfer), $p$ is the number of GPUs, $\alpha_{o,p}$ captures fixed startup and synchronization overhead, and $\beta_{o,p}$ captures the message-size-dependent transfer cost. For each event we define the per-GPU communication volume as $V_e=B_e^{\mathrm{out}}+B_e^{\mathrm{in}}$. We calibrate the model offline for every communication operation type and GPU count by sweeping communication volumes, recording the observed duration $T_e^{\mathrm{obs}}$, and fitting $T_e^{\mathrm{obs}}=\alpha_{o,p}+\beta_{o,p}V_e$. The corresponding effective bandwidth is $B^{\mathrm{eff}}_{o,p}=1/\beta_{o,p}$. This calibration is performed once per hardware/topology and is then reused by the predictor.
 
-\review{For ring AllReduce, the communication volume follows directly from the ReduceScatter and AllGather phases. If the communicated tensor has size $S_e$ bytes, each GPU sends and receives $(p-1)S_e/p$ bytes in each phase; therefore the total per-GPU communication volume is
+For ring AllReduce, the communication volume follows directly from the ReduceScatter and AllGather phases. If the communicated tensor has size $S_e$ bytes, each GPU sends and receives $(p-1)S_e/p$ bytes in each phase; therefore the total per-GPU communication volume is
 \begin{equation}
 V_e^{AR}=\frac{2(p-1)}{p}S_e.
 \label{eq:allreduce_volume}
@@ -144,7 +144,7 @@ For pipeline-parallel point-to-point transfers, the corresponding activation ten
 \widehat{E}^{comm}_e=\bar{P}^{comm}_{o,p}T_e^{comm}.
 \label{eq:comm_energy}
 \end{equation}
-The resulting communication-module estimate is then composed with the compute-module estimates by the multi-level regressor in \S\ref{ss:design-prediction}.}
+The resulting communication-module estimate is then composed with the compute-module estimates by the multi-level regressor in \S\ref{ss:design-prediction}.
 
 %\anurag{remove the hat from T here and appendix}
 
@@ -156,11 +156,11 @@ We align these communication windows with the system power trace and integrate p
 Effective bandwidth is computed from the observed communication volume and transfer time, and the bytes sent and received are derived directly from the tensor size being communicated.
 
 \anurag{Appendix - B Methodology: Data Collection to predict communication energy}
-\review{\textbf{Tensor parallelism.} We repeatedly profile the ring AllReduce operation instead of relying on a single execution trace. Ranks do not always reach a collective at exactly the same time because of runtime scheduling, cache behavior, and memory-access variation. Consequently, the observed AllReduce interval contains both link activity and synchronization/waiting energy. We collect repeated runs to capture the distribution of leading and lagging GPU behavior across the ReduceScatter and AllGather phases, so that the communication predictor is not trained on one potentially unrepresentative synchronization instance.}
+\textbf{Tensor parallelism.} We repeatedly profile the ring AllReduce operation instead of relying on a single execution trace. Ranks do not always reach a collective at exactly the same time because of runtime scheduling, cache behavior, and memory-access variation. Consequently, the observed AllReduce interval contains both link activity and synchronization/waiting energy. We collect repeated runs to capture the distribution of leading and lagging GPU behavior across the ReduceScatter and AllGather phases, so that the communication predictor is not trained on one potentially unrepresentative synchronization instance.
 
-\review{\textbf{Pipeline parallelism.} Communication is isolated at every stage boundary. We use \texttt{nsys} timestamps to identify the completion of the last forward kernel on stage $i$ and the start of the first forward kernel on stage $i+1$. The interval between these events is attributed to the point-to-point activation transfer, and system power is integrated over the same interval to obtain the corresponding communication energy. This directly associates the transferred activation tensor with the energy consumed while moving it between the producing and consuming stages.}
+\textbf{Pipeline parallelism.} Communication is isolated at every stage boundary. We use \texttt{nsys} timestamps to identify the completion of the last forward kernel on stage $i$ and the start of the first forward kernel on stage $i+1$. The interval between these events is attributed to the point-to-point activation transfer, and system power is integrated over the same interval to obtain the corresponding communication energy. This directly associates the transferred activation tensor with the energy consumed while moving it between the producing and consuming stages.
 
-\review{\textbf{Data parallelism.} Each replica completes its local forward pass independently and a final AllGather collates the outputs. We therefore profile the tail-end interval beginning when the output layer completes and ending when the AllGather finishes. Because there is one such output-collation event per inference request in our setup, this boundary is more straightforward than in tensor or pipeline parallelism and typically contributes less communication volume. Across all three strategies, bytes sent/received are derived from the communicated tensor size and communication pattern, while effective bandwidth is computed from observed transfer volume and duration.}
+\textbf{Data parallelism.} Each replica completes its local forward pass independently and a final AllGather collates the outputs. We therefore profile the tail-end interval beginning when the output layer completes and ending when the AllGather finishes. Because there is one such output-collation event per inference request in our setup, this boundary is more straightforward than in tensor or pipeline parallelism and typically contributes less communication volume. Across all three strategies, bytes sent/received are derived from the communicated tensor size and communication pattern, while effective bandwidth is computed from observed transfer volume and duration.
 
 For compute modules, \sys{} records (i) resource-specific signals that summarize system/GPU activity, and (ii) model-specific descriptors extracted from the LLM configuration.
 

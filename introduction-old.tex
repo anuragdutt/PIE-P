@@ -24,9 +24,9 @@ Parallel inference incurs substantial energy from inter-GPU collectives and tran
 which are absent in single-GPU settings and can account for a large fraction of end-to-end energy (see Figure~\ref{fig:all_reduce_energy}).
 Ignoring this component leads to systematic underestimation of energy.
 
-\item \review{\textbf{Non-deterministic synchronization.}
+\item \textbf{Non-deterministic synchronization.}
 Multi-GPU execution introduces run-to-run variability from stragglers and synchronization (especially in ring-based AllReduce), creating non-deterministic energy consumption. This
-variability makes both measurement and prediction more challenging.}%variability makes both measurement (separating transfer vs.\ waiting) and prediction (capturing the distribution of synchronization energy rather than a single trace).}
+variability makes both measurement and prediction more challenging.%variability makes both measurement (separating transfer vs.\ waiting) and prediction (capturing the distribution of synchronization energy rather than a single trace).}
 \end{itemize}
 
 
@@ -58,7 +58,7 @@ variability makes both measurement and prediction more challenging.}%variability
 %     %, leaving a key gap in the end-to-end prediction for modern multi-GPU deployments.
 %     Further, communication patterns in LLM inference are inherently more variable than compute due to their dependence on topology, library scheduling, and interference, leading to higher variance in total energy~\cite{allreduce-cost}. 
 %     \item \be{Synchronization} from stragglers and GPU idle/wait time during barriers and pipelined handoffs introduces significant variability in the inference process. This translates to \emph{uncertainty in the energy consumption}, for example, during \emph{idle-but-powered} periods that depend on runtime contention and race conditions. 
-%     \review{
+%     {
 %     Because straggler behavior and barrier arrival times depend on runtime scheduling, contention, and race conditions, these synchronization effects are inherently \emph{non-deterministic} across runs, even for identical inputs and configurations.
 %     }
 %     \item \be{Generalization} of the predictor across heterogeneous model architectures and configurations is a difficult problem because, for example, changes in transformer block structure and parallelization strategy alter both tensor sizes and communication patterns~\cite{ultima}.
@@ -91,8 +91,8 @@ However, \sys{} goes beyond the single-GPU setting considered in these prior wor
 \emph{Communication Energy Profiling} by treating inter-GPU communication events as individual modules in the model-tree abstraction and learning their energy use via benchmarking.
 %, capturing both communication and synchronization behavior;
     \item \emph{Use of Structural Model Features}, such as number of attention heads, to capture the relationship between model architecture and communication patterns when using different parallelisms.
-    % \item \review{\emph{Synchronization Sampling} to mitigate uncertainty in energy (from non-deterministic events in parallel inference) by carefully sampling energy measurements of idle times during synchronization and inter-GPU communication.}
-    \item \review{\emph{Communication-Aware Prediction} to account for parallelization-induced communication overheads by modeling inter-GPU collective latency as a function of fixed communication latency, effective bandwidth, and the bytes sent/received, and using the predicted communication time to estimate the corresponding AllReduce energy contribution.}
+    % \item {\emph{Synchronization Sampling} to mitigate uncertainty in energy (from non-deterministic events in parallel inference) by carefully sampling energy measurements of idle times during synchronization and inter-GPU communication.}
+    \item \emph{Communication-Aware Prediction} to account for parallelization-induced communication overheads by modeling inter-GPU collective latency as a function of fixed communication latency, effective bandwidth, and the bytes sent/received, and using the predicted communication time to estimate the corresponding AllReduce energy contribution.
 
     \item \emph{Aggregate Runtime Feature Representation} to scalably and concisely represent the features of multiple GPUs
     based on aggregates of their runtime features. 

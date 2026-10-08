@@ -118,7 +118,7 @@ For communication modules, we additionally collect communication-specific featur
 % \section{Methodology Alpha--Beta Model for Communication Energy}
 % \label{app:alpha-beta-comm}
 % \aruna{can potentially be removed, content is moved to main text}
-% \review{
+% {
 % PIE-P models collective communication using an offline-calibrated alpha--beta latency predictor. For a communication event $e$ of operation type $o$ running on $p$ GPUs, let $B_{e}^{\mathrm{out}}$ and $B_{e}^{\mathrm{in}}$ denote the bytes sent and received by each rank. The total per-rank communication volume is:
 % }
 % \begin{equation}
@@ -132,7 +132,7 @@ For communication modules, we additionally collect communication-specific featur
 % T*{e}^{\mathrm{comm}} =
 % \alpha*{o,p} + \beta_{o,p} V_e .
 % \end{equation}
-    % \review{}
+    % {}
 % Here, $\alpha_{o,p}$ captures fixed launch, scheduling, and synchronization overheads, while $\beta_{o,p}=1/B_{o,p}^{\mathrm{eff}}$ captures the inverse effective bandwidth. For ring AllReduce with tensor size $S_e$, each rank sends and receives $(p-1)S_e/p$ bytes. Thus, the AllReduce communication volume is
 % \begin{equation}
 % \label{eq:allreduce-volume}
@@ -897,18 +897,18 @@ LayerNorm/RMSNorm                      & 8.12\% \tabularnewline
 % \section{Additional Results on NVIDIA B40 and H100 GPUs}
 % \label{app:additional_perf_results}
 
-% \review{To further evaluate whether PIE-P remains effective beyond the primary GPU platform used in our main experiments, we extend our evaluation to two additional GPU platforms: NVIDIA~B40 and NVIDIA~H100. These experiments serve as hardware-extension studies, showing that PIE-P's module-level decomposition and feature-based prediction remain accurate when the underlying GPU architecture and runtime behavior change.}
+% {To further evaluate whether PIE-P remains effective beyond the primary GPU platform used in our main experiments, we extend our evaluation to two additional GPU platforms: NVIDIA~B40 and NVIDIA~H100. These experiments serve as hardware-extension studies, showing that PIE-P's module-level decomposition and feature-based prediction remain accurate when the underlying GPU architecture and runtime behavior change.}
 
-% \review{The B40 results show that PIE-P continues to provide accurate fine-grained energy estimates across the major modules of transformer inference. At the module level, PIE-P achieves single-digit MAPE across the main compute and communication components: 7.8\% for Self-Attention, 6.6\% for MLP, 8.2\% for AllReduce, 7.2\% for LayerNorm, and 6.9\% for Embedding. These results show that the predictor is not only fitting end-to-end model energy, but also preserving accuracy at the level of the individual modules used by the model-tree abstraction. In particular, the low AllReduce error on B40 indicates that the communication-aware component of PIE-P remains effective under a different GPU platform.}
+% {The B40 results show that PIE-P continues to provide accurate fine-grained energy estimates across the major modules of transformer inference. At the module level, PIE-P achieves single-digit MAPE across the main compute and communication components: 7.8\% for Self-Attention, 6.6\% for MLP, 8.2\% for AllReduce, 7.2\% for LayerNorm, and 6.9\% for Embedding. These results show that the predictor is not only fitting end-to-end model energy, but also preserving accuracy at the level of the individual modules used by the model-tree abstraction. In particular, the low AllReduce error on B40 indicates that the communication-aware component of PIE-P remains effective under a different GPU platform.}
 
-% % \review{We also evaluate leave-one-out generalization on B40 in the 2-GPU setting across multiple model families. For Vicuna, the held-out model errors are 11.83\%, 12.22\%, and 12.81\% for the 7B, 13B, and 33B variants, respectively. Mistral shows slightly higher but still moderate errors of 14.41\%, 15.29\%, and 15.81\% across its variants. Llama shows 13.56\% and 14.64\% for the 7B and 13B models, while the larger 70B model is more challenging at 23.52\%. Qwen achieves 14.25\%, 17.21\%, and 13.21\% across its 8B, 14B, and 32B variants.}
+% % {We also evaluate leave-one-out generalization on B40 in the 2-GPU setting across multiple model families. For Vicuna, the held-out model errors are 11.83\%, 12.22\%, and 12.81\% for the 7B, 13B, and 33B variants, respectively. Mistral shows slightly higher but still moderate errors of 14.41\%, 15.29\%, and 15.81\% across its variants. Llama shows 13.56\% and 14.64\% for the 7B and 13B models, while the larger 70B model is more challenging at 23.52\%. Qwen achieves 14.25\%, 17.21\%, and 13.21\% across its 8B, 14B, and 32B variants.}
 
 % \aruna{Please add a table for H100 results, no need for leave-one-out I think. }
-% \review{For the 2-GPU H100 setting, PIE-P shows a modest increase in prediction error relative to B40, with each corresponding MAPE value increased by 12.8\%. At the module level, PIE-P obtains 8.80\% for Self-Attention, 7.44\% for MLP, 9.25\% for AllReduce, 8.12\% for LayerNorm, and 7.78\% for Embedding. Despite the increase, the module-level errors remain in the single-digit range, indicating that the same communication-aware decomposition continues to capture the major sources of energy consumption on H100.}
+% {For the 2-GPU H100 setting, PIE-P shows a modest increase in prediction error relative to B40, with each corresponding MAPE value increased by 12.8\%. At the module level, PIE-P obtains 8.80\% for Self-Attention, 7.44\% for MLP, 9.25\% for AllReduce, 8.12\% for LayerNorm, and 7.78\% for Embedding. Despite the increase, the module-level errors remain in the single-digit range, indicating that the same communication-aware decomposition continues to capture the major sources of energy consumption on H100.}
 
-% \review{The leave-one-out results on H100 also remain moderate in the 2-GPU setting. For Vicuna, the held-out model errors are 13.34\%, 13.78\%, and 14.45\% for the 7B, 13B, and 33B variants, respectively. Mistral obtains 16.25\%, 17.25\%, and 17.83\% across its variants. Llama obtains 15.30\% and 16.51\% for the 7B and 13B models, while the larger 70B model reaches 26.53\%. Qwen obtains 16.07\%, 19.41\%, and 14.90\% across its 8B, 14B, and 32B variants. These results suggest that while H100 introduces somewhat higher prediction error, PIE-P's feature-based and communication-aware design remains effective across GPU platforms.}
+% {The leave-one-out results on H100 also remain moderate in the 2-GPU setting. For Vicuna, the held-out model errors are 13.34\%, 13.78\%, and 14.45\% for the 7B, 13B, and 33B variants, respectively. Mistral obtains 16.25\%, 17.25\%, and 17.83\% across its variants. Llama obtains 15.30\% and 16.51\% for the 7B and 13B models, while the larger 70B model reaches 26.53\%. Qwen obtains 16.07\%, 19.41\%, and 14.90\% across its 8B, 14B, and 32B variants. These results suggest that while H100 introduces somewhat higher prediction error, PIE-P's feature-based and communication-aware design remains effective across GPU platforms.}
 
-% \review{For the 4-GPU B40 setting, PIE-P again maintains reasonable accuracy across families. Vicuna obtains 14.21\%, 13.39\%, and 15.25\% MAPE across the 7B, 13B, and 33B variants. Mistral obtains 16.66\%, 19.29\%, and 19.71\%, while Qwen obtains 14.54\%, 16.34\%, and 14.91\%. Taken together, these results provide additional evidence that PIE-P is not tied to a single GPU platform. Although a fully hardware-agnostic predictor remains future work, the B40 and H100 experiments show that the same decomposition, communication modeling, and structural/runtime feature set can be reused successfully on additional GPU platforms with modest prediction error.}
+% {For the 4-GPU B40 setting, PIE-P again maintains reasonable accuracy across families. Vicuna obtains 14.21\%, 13.39\%, and 15.25\% MAPE across the 7B, 13B, and 33B variants. Mistral obtains 16.66\%, 19.29\%, and 19.71\%, while Qwen obtains 14.54\%, 16.34\%, and 14.91\%. Taken together, these results provide additional evidence that PIE-P is not tied to a single GPU platform. Although a fully hardware-agnostic predictor remains future work, the B40 and H100 experiments show that the same decomposition, communication modeling, and structural/runtime feature set can be reused successfully on additional GPU platforms with modest prediction error.}
 
 
 

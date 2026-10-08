@@ -1,7 +1,7 @@
 \begin{figure*}[t!]
     \centering
     \includegraphics[width=\textwidth]{figures/llm_energy_comparison.pdf}
-    \vspace{-24pt}
+    \vspace{-12pt}
     \caption{Energy consumption across models and GPU configurations (2- and 4-GPU runs use tensor parallelism). Bars show total model energy; lighter segments show AllReduce communication energy (\% shown) and darker segments show remaining computation energy. Missing bars denote cases where model did not fit in GPU memory.\anshul{do revisit space below figures and tables at the end as some have too much space and some are too tightly placed with text.}} 
     \vspace{-9pt}
     \label{fig:all_reduce_energy}
@@ -16,11 +16,11 @@ There are three main parallelism strategies that are widely used for LLM inferen
     \item \textbf{Tensor parallelism} splits individual model computations (such as matrix multiplications) across multiple GPUs to enable parallel execution of operations~\cite{megatron}.
 \end{enumerate}
 
-\noindent \review{Tensor, pipeline, and data parallelism expose distinct communication patterns. In tensor parallelism, GPUs jointly execute operations within a layer, so partial results must be exchanged and combined using collectives such as AllReduce. Because these collectives occur repeatedly throughout the forward pass, communication is closely coupled with computation and synchronization.}
+\noindent Tensor, pipeline, and data parallelism expose distinct communication patterns. In tensor parallelism, GPUs jointly execute operations within a layer, so partial results must be exchanged and combined using collectives such as AllReduce. Because these collectives occur repeatedly throughout the forward pass, communication is closely coupled with computation and synchronization.
 
-\review{Pipeline parallelism partitions layers across stages, and each stage sends its output activations to the next stage using point-to-point communication. Communication therefore occurs primarily at stage boundaries as activations move through the pipeline.}
+Pipeline parallelism partitions layers across stages, and each stage sends its output activations to the next stage using point-to-point communication. Communication therefore occurs primarily at stage boundaries as activations move through the pipeline.
 
-\review{In data parallelism, each replica independently executes the full model on a different portion of the workload. Communication is therefore limited during the forward computation, with collective operations such as AllGather used when outputs from multiple replicas need to be consolidated.}
+In data parallelism, each replica independently executes the full model on a different portion of the workload. Communication is therefore limited during the forward computation, with collective operations such as AllGather used when outputs from multiple replicas need to be consolidated.
 \aruna{should we say something about other parallelism such as hybrid, FSDP etc and say our work can be potentially extended to them but we leave it to future work?}
 %Our framework can be extended to other strategies such as hybrid parallelism that combines existing parallelism methods; we leave this to future work.
 %\medskip
@@ -44,7 +44,7 @@ In multi-GPU inference, this is further complicated because each module's comput
 % \anurag{Make the compute energy smaller}
 
 \noindent\textbf{Communication energy.}
-\review{Multi-GPU inference additionally incurs \emph{substantial} energy from inter-GPU communication, including AllReduce in tensor parallelism, point-to-point transfers in pipeline parallelism, and AllGather in data parallelism, which is absent in single-device execution.}
+Multi-GPU inference additionally incurs \emph{substantial} energy from inter-GPU communication, including AllReduce in tensor parallelism, point-to-point transfers in pipeline parallelism, and AllGather in data parallelism, which is absent in single-device execution.
 % \noindent\textbf{Communication energy.}
 % Multi-GPU inference additionally incurs \emph{substantial} energy from inter-GPU communication (e.g., AllReduce/ReduceScatter/AllGather, see Appendix~\ref{app:collective-background}), 
 %\aruna{if you define these somewhere in the appendix, please add a reference}, 
@@ -87,7 +87,7 @@ GPUs may lag/lead each other non-deterministically.
 
 % LLM energy consumption under parallel inference is driven by not only the computation cost, but also the \be{inter-GPU communication costs}. 
 % This matters because communication can be a large fraction of total energy: Figure~\ref{fig:all_reduce_energy} shows that, for tensor-parallel runs, collective communication (e.g., AllReduce) contributes a substantial portion of end-to-end energy across model families and GPU counts (e.g., 14.2\%--35.1\% for Vicuna as model and GPU count scale). 
-% \review{
+% {
 % Predictors that extrapolate energy to multi-GPU settings solely from compute (or from per-rank tensor operations) systematically miss this component and can incur large errors.
 % \textbf{Compute energy itself is non-trivial to model}, since it depends on how kernels exercise GPU resources (SM activity, memory intensity, and power-state behavior) across heterogeneous LLM modules.
 % Prior work often sidesteps this by using \emph{coarse power measurements} (e.g., NVML board power sampled over time) or workload-level estimators (e.g., Strubell et al.’s energy-as-power$\times$time style accounting), and systems such as IrEne build learned predictors from profiled execution statistics.
@@ -107,7 +107,7 @@ GPUs may lag/lead each other non-deterministically.
 % \noindent (ii) \be{Fine-grained energy accounting} is challenging as AllReduce overlaps computation and network transfer. 
 % From a prediction standpoint, this requires isolating the different sources of energy consumption and accounting for them. 
 % This is not an issue in pipeline and data parallelism as GPU communication and computation are not synchronized. 
-% \review{
+% {
 % Finally, \sys{} must also generalize across heterogeneous LLM variants, architectures, and deployment configurations, since changes in block structure (e.g., attention/MLP variants) and parallelization degree alter tensor shapes and collective-communication patterns, making predictors calibrated on one model/config unreliable on another~\cite{ultima}.
 % }
 %\smallskip\noindent{\textbf{Challenges: Communication energy in parallel inference.}}
