@@ -33,31 +33,34 @@ Ground-truth system power/energy is measured using an external Watts Up Pro moni
 
 We profile batch sizes 8, 16, 32, and 64 and output sequence lengths 512 and 1024. We use DeepSpeed~\cite{deepspeed} for tensor, pipeline, and data-parallel inference. We evaluate generalization using leave-one-out experiments because a useful predictor should transfer to models that were not present in its training measurements. In leave-one-variant-out evaluation, an entire model variant is excluded and predicted using module-level predictors learned from the remaining variants in the same family. In leave-one-family-out evaluation, all variants of one family are excluded from training, providing a stricter test of transfer across model architectures.
 
-\anshul{Aruna, check the below para from Anurag. Looks ok to me; only thing is we could remove the ``We do not repeat the complete Cartesian product of every model and every experiment on every hardware platform; instead, '' part.
-Aruna: I made it a bit simpler but maintained the overall structure}
-\aruna{I guess this can be combined with the discussion earlier on using representative models. Not sure if we need a repeat. Anshul?}
-\review{The full tensor-parallel evaluation covers A6000 and B40. A representative model subset on H200 tests the same methodology on NVLink-connected GPUs. We concentrate module-level, generalization, and ablation analyses on tensor parallelism because collectives recur within Transformer blocks; pipeline and data parallelism test different communication patterns.}
+%\anshul{Aruna, check the below para from Anurag. Looks ok to me; only thing is we could remove the ``We do not repeat the complete Cartesian product of every model and every experiment on every hardware platform; instead, '' part.
+%Aruna: I made it a bit simpler but maintained the overall structure}
+%\aruna{I guess this can be combined with the discussion earlier on using representative models. Not sure if we need a repeat. Anshul?}
+The full tensor-parallel evaluation covers A6000 and B40. A representative model subset on H200 tests the same methodology on NVLink-connected GPUs. 
+\anshul{below sentence is too dense, try splitting into two}
+We conduct module-level, generalization, and ablation analyses on tensor parallelism because collectives recur within Transformer blocks; pipeline and data parallelism test different communication patterns.
 
 
 \review{\smallskip\noindent\textbf{Baselines.} We compare \sys{} against energy prediction and measurement methods under the same inference configurations.} \\
+\anshul{didn't understand this statement above, can we just remove it?}
 \noindent\textbf{\be{IrEne}~\cite{irene}:} A hierarchical energy prediction framework for single-GPU execution and the closest methodological baseline to \sys{}. IrEne represents execution at mathematical-operation, machine-learning-operation, and module levels, learns leaf-level energy predictors from runtime resource utilization and model specifications, and recursively combines child predictions to obtain higher-level energy estimates. We use IrEne in the same inference configurations as \sys{}; its key limitation for our setting is that the hierarchy does not represent inter-GPU communication as a first-class module. \\
 \review{\textbf{\be{IrEne with historical communication energy}:} We augment IrEne's estimate with communication energy from historical measurements for the corresponding deployment. This comparison isolates the benefit of adding measured communication energy without PIE-P's communication predictor.} \\
 \textbf{\be{CodeCarbon}~\cite{codecarbon}:} A software-based energy/\(\mathrm{CO_2}\) estimator that integrates telemetry-derived power over time, including GPU measurements from NVML and host measurements where available. It provides a commonly used software-only estimate, but does not explicitly represent the communication structure introduced by parallel inference. \\
 \textbf{\be{Wilkins et al.}~\cite{wilkins2024offlineenergyoptimalllmserving}:} A per-request energy predictor based on prompt and output lengths. We implement the token-in/token-out model by fitting $e_K(\tau_{\mathrm{in}},\tau_{\mathrm{out}})=\alpha_0\tau_{\mathrm{in}}+\alpha_1\tau_{\mathrm{out}}+\alpha_2\tau_{\mathrm{in}}\tau_{\mathrm{out}}$ on a calibration set. \\
 \textbf{\be{NVML}~\cite{nvml}:} A widely used software source of GPU power/energy telemetry~\cite{strubell19,luccioni2022estimatingcarbonfootprintbloom,Jesse-dodge-icml}. To test whether GPU-only energy is sufficient to predict full-system energy, we train a model-level linear regressor with NVML-reported GPU energy as the independent variable and the wall-meter/IPMI measurement as the prediction target. \\
-\aruna{Anurag, I think you misunderstood. The two PIE-P versions above are ablations, we dont need them here. But we should add where we compare PIE-P with Irene + network measurement}
+%\aruna{Anurag, I think you misunderstood. The two PIE-P versions above are ablations, we dont need them here. But we should add where we compare PIE-P with Irene + network measurement}
 \textbf{\be{NeuSight-style energy predictor}~\cite{neusight}:} As discussed earlier, Neusight is designed to predict latency. Instead, we retain NeuSight's fine-grained matrix-tile decomposition, FLOP/memory features, and MLP prediction structure, but replace latency with energy as the target. This tests whether a model designed for latency prediction can be retargeted to energy.
 
 We omit the software-based estimator of Strubell et al.~\cite{strubell19} as it is outperformed by baselines such as IrEne~\cite{irene}.
 
 
-\aruna{This is very good, but just feels a little ChatGPT-ish, especually the first paragraph}
+%\aruna{This is very good, but just feels a little ChatGPT-ish, especually the first paragraph}
 \subsection{Summary of results}
 %{\smallskip\noindent\textbf{Summary of results.}
 \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
 \item \review{\textbf{Tensor parallelism:} \sys{} obtains average MAPE of 17.6\% on A6000, 15.5\% on B40, and 16.8\% on the representative H200 evaluation.}
 \item \review{\textbf{Pipeline and data parallelism:} Average MAPE is 12.2\% and 10.8\%, respectively.}
-\item \review{\textbf{Generalization:} Leave-one-variant-out MAPE ranges from 15.8-24.5\% on A6000 and 11.8-23.5\% on B40. Leave-one-family-out MAPE ranges from 24.1-27.6\% and 12.2-23.1\%, respectively.}
+%\item \review{\textbf{Generalization:} Leave-one-variant-out MAPE ranges from 15.8-24.5\% on A6000 and 11.8-23.5\% on B40. Leave-one-family-out MAPE ranges from 24.1-27.6\% and 12.2-23.1\%, respectively.}
 \anshul{Anurag, maybe we add separate numbers for each LOO mechanism above as 28\% looks bad}
 \item \review{\textbf{NVML baseline:} NVML-based regression incurs 28.5-44.2\% MAPE on A6000.}
 \item \review{\textbf{Module-level prediction:} Self-Attention and MLP errors remain below 12\% on A6000 and below 9\% on B40; AllReduce incurs 17.3-19.4\% MAPE.}
@@ -326,7 +329,8 @@ The ablated configuration collapses these differences into a single average valu
 We find that directly predicting total model energy leads to substantially higher errors: the MAPE increases to 61.2\% for Vicuna, 84.3\% for Mistral, 115.1\% for Llama, and 60.8\% for Qwen.
 This shows that energy prediction for parallel inference is not simply a model-level regression problem. Runtime features vary significantly across compute-heavy modules (e.g., Attention, MLP) and communication-heavy modules (e.g., AllReduce). Collapsing these effects into a single aggregate feature loses this structure and causes the predictor to mix heterogeneous sources of energy variation.
 
-\anshul{Anurag, why are below two paras part of this Ablation Study? They seem unrelated, no?}
+%\anshul{Anurag, why are below two paras part of this Ablation Study? They seem unrelated, no?}
+\anshul{hmm, still not sure about where to place the ones below. can feature correlation move to end of subsection D to provide further evidence that energy alone isn't enough? if yes, then the rest of this subsection can stay as is with title changed to something like ``Comparison against NeuSight retargeted to energy'' and it could be moved above ablation studies}
 \subsection{\review{Additional Analyses}}
 \anurag{Appendix - K Additional Results: Feature correlation analysis}
 \review{\smallskip\noindent\textbf{Feature correlation.} Across Vicuna configurations, total measured energy correlates with NVML GPU energy ($\rho=0.633$-$0.762$), batch size ($\rho=0.735$-$0.737$), execution time ($\rho=0.658$-$0.664$), and memory usage ($\rho=0.656$-$0.663$). These associations motivate using multiple workload and runtime features rather than GPU energy alone.}
