@@ -32,7 +32,7 @@ The \be{communication overheads introduced by multi-GPU execution fundamentally 
 Beyond predicting the energy consumption of the entire model, \sys{} also estimates the energy of individual modules, enabling developers to identify energy bottlenecks during inference. 
 
 To obtain accurate energy predictions in parallel inference deployments, 
-\sys{} needs to keep track both parallel communication and computation which are both independently challenging. Parallel inference incurs substantial energy from inter-GPU communication and transfers (see \S\ref{s:challenges}),
+\sys{} needs to keep track of both parallel communication and computation which are both independently challenging. Parallel inference incurs substantial energy from inter-GPU communication and transfers (see \S\ref{s:challenges}),
 which are absent in single-GPU settings and can account for a large fraction of end-to-end energy (see Figure~\ref{fig:all_reduce_energy}). 
 %%In addition, multi-GPU execution introduces run-to-run variability from stragglers and synchronization (see \S\ref{}), creating non-deterministic energy consumption.
 In terms of computation, energy depends how each module in the model is executed on the GPU. % which in-turn depends on the tensor shape and hardware/resource characteristics
