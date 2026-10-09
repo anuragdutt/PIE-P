@@ -37,10 +37,11 @@ We profile batch sizes 8, 16, 32, and 64 and output sequence lengths 512 and 102
 %\aruna{I guess this can be combined with the discussion earlier on using representative models. Not sure if we need a repeat. Anshul?}
 The full tensor-parallel evaluation covers A6000 and B40. A representative model subset on H200 tests the same methodology on NVLink-connected GPUs. 
 \anshul{below sentence is too dense, try splitting into two}
-We conduct module-level, generalization, and ablation analyses on tensor parallelism because collectives recur within Transformer blocks; pipeline and data parallelism test different communication patterns.
+\review{We focus our module-level, generalization, and ablation analyses on tensor parallelism, where communication collectives recur within Transformer blocks.
+We evaluate pipeline and data parallelism separately to examine their distinct communication patterns.}
 
 
-\smallskip\noindent\textbf{Baselines.} We compare \sys{} against energy prediction and measurement methods under the same inference configurations. \\
+\smallskip\noindent\review{\textbf{Baselines.}} \\
 \anshul{didn't understand this statement above, can we just remove it?}
 \noindent\textbf{\be{IrEne}~\cite{irene}:} A hierarchical energy prediction framework for single-GPU execution and the closest methodological baseline to \sys{}. IrEne represents execution at mathematical-operation, machine-learning-operation, and module levels, learns leaf-level energy predictors from runtime resource utilization and model specifications, and recursively combines child predictions to obtain higher-level energy estimates. We use IrEne in the same inference configurations as \sys{}; its key limitation for our setting is that the hierarchy does not represent inter-GPU communication as a first-class module. \\
 \textbf{\be{IrEne with historical communication energy}:} We augment IrEne's estimate with communication energy from historical measurements for the corresponding deployment. This comparison isolates the benefit of adding measured communication energy without PIE-P's communication predictor. \\
