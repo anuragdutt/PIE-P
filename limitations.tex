@@ -14,11 +14,4 @@
 % \end{itemize}
 % \end{comment}
 
-Our experimental results show that \sys{} generalizes across models and can accurately predict the energy consumption of parallelized inference on different hardware. 
-%However, \sys{} is trained separately for each hardware as GPU capabilities and architecture can differ significantly.
-While the model-tree decomposition and structural features are reused across A6000, B40, and H200, the communication latency, power, and module-level energy predictors are calibrated separately for each platform. 
-A natural next step is to reduce the cost of adapting \sys{} to new GPU platforms. 
-As part of future work, we plan to investigate whether limited target-platform profiling can support adaptation without retraining the predictors.
 
-We also plan to extend the \sys{} methodology to additional architectures and parallelism configurations. 
-Encoder-decoder and mixture-of-experts models introduce different module structures and communication operations, while hybrid tensor, pipeline, and data parallelism combines multiple communication patterns. These settings call for corresponding extensions to module decomposition and communication-event calibration, which warrant a full submission in and of itself.
