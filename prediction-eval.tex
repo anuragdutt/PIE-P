@@ -305,7 +305,9 @@ Thus, the penalty for omitting communication, as in CodeCarbon and IrEne, is sma
 %\anshul{Anurag, why are below two paras part of this Ablation Study? They seem unrelated, no?}
 % \anshul{hmm, still not sure about where to place the ones below. can feature correlation move to end of subsection D to provide further evidence that energy alone isn't enough? if yes, then the rest of this subsection can stay as is with title changed to something like ``Comparison against NeuSight retargeted to energy'' and it could be moved above ablation studies}
 \subsection{Comparison Against NeuSight Retargeted to Energy}
-Replacing NeuSight's latency target with energy gives 87.3\% average MAPE on the evaluated Vicuna variants (Table~\ref{tab:neusight_energy_target}). Its latency-oriented features do not explicitly represent system power or inter-GPU communication energy.
+NeuSight~\cite{neusight} decomposes GPU kernels into tiles and uses MLPs to predict hardware utilization from compute, memory, and GPU architectural features, which is then used to estimate kernel latency under hardware performance bounds.
+We adapt its tile-based decomposition, features, and MLP architecture to predict measured system energy instead of latency.
+This adaptation yields 87.3\% average MAPE on Vicuna (Table~\ref{tab:neusight_energy_target}), indicating that latency-oriented features alone are insufficient for accurate system-level energy prediction.
 \anshul{let us expand this a bit to explain how neusight works briefly and how we modify it to target energy}
 
 \begin{table}[t]
