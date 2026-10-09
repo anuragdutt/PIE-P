@@ -37,8 +37,8 @@ We profile batch sizes 8, 16, 32, and 64 and output sequence lengths 512 and 102
 %\aruna{I guess this can be combined with the discussion earlier on using representative models. Not sure if we need a repeat. Anshul?}
 The full tensor-parallel evaluation covers A6000 and B40. A representative model subset on H200 tests the same methodology on NVLink-connected GPUs. 
 \anshul{below sentence is too dense, try splitting into two}
-\review{We focus our module-level, generalization, and ablation analyses on tensor parallelism, where communication collectives recur within Transformer blocks.
-We evaluate pipeline and data parallelism separately to examine their distinct communication patterns.}
+\review{We focus our module-level, generalization, and ablation analyses on tensor parallelism, which presents a harder case for energy prediction because inter-GPU collectives and synchronization recur within Transformer blocks.
+We evaluate pipeline and data parallelism separately to assess their distinct communication patterns.}
 
 
 \smallskip\noindent\review{\textbf{Baselines.}} \\
