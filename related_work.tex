@@ -15,6 +15,20 @@ The more recent work on energy prediction~\cite{Jesse-dodge-icml} uses a tool ca
 %Taken together, these limitations show that existing prediction methods are not designed for multi-GPU inference: they either rely on coarse aggregate signals or single-GPU model abstractions, and therefore \be{do not explicitly model the communication energy introduced by parallel inference}. 
 This is the gap that \sys{} addresses.
 
+LLMCO2~\cite{llmco2} predicts aggregate inference
+energy but does not provide fine-grained energy
+attribution to individual compute and communication
+modules. EnergyLens~\cite{energylens} combines
+kernel-level energy prediction with communication
+modeling, emphasizing MoE inference with expert
+parallelism, routing imbalance, and compute-communication
+overlap. DynamoLLM~\cite{dynamollm} relies on
+configuration-specific energy-performance profiles
+for SLO-aware cluster management. In contrast,
+\sys{} provides a unified module-level energy
+prediction framework across tensor, pipeline,
+and data parallelism.
+
 \smallskip
 \noindent\textbf{Energy measurement.} 
 Another area of research focuses on energy measurement~\cite{lacoste2019quantifyingcarbonemissionsmachine, anthony2020carbontrackertrackingpredictingcarbon, codecarbon, energyVis, mauricio, luccioni2022estimatingcarbonfootprintbloom,dnne} rather than prediction. 
