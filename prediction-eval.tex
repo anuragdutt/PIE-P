@@ -48,7 +48,7 @@ We conduct module-level, generalization, and ablation analyses on tensor paralle
 \textbf{\be{Wilkins et al.}~\cite{wilkins2024offlineenergyoptimalllmserving}:} A per-request energy predictor based on prompt and output lengths. We implement the token-in/token-out model by fitting $e_K(\tau_{\mathrm{in}},\tau_{\mathrm{out}})=\alpha_0\tau_{\mathrm{in}}+\alpha_1\tau_{\mathrm{out}}+\alpha_2\tau_{\mathrm{in}}\tau_{\mathrm{out}}$ on a calibration set. \\
 \textbf{\be{NVML}~\cite{nvml}:} A widely used software source of GPU power/energy telemetry~\cite{strubell19,luccioni2022estimatingcarbonfootprintbloom,Jesse-dodge-icml}. To test whether GPU-only energy is sufficient to predict full-system energy, we train a model-level linear regressor with NVML-reported GPU energy as the independent variable and the wall-meter/IPMI measurement as the prediction target. \\
 %\aruna{Anurag, I think you misunderstood. The two PIE-P versions above are ablations, we dont need them here. But we should add where we compare PIE-P with Irene + network measurement}
-\textbf{\be{NeuSight-style energy predictor}~\cite{neusight}:} As discussed earlier, Neusight is designed to predict latency. Instead, we retain NeuSight's fine-grained matrix-tile decomposition, FLOP/memory features, and MLP prediction structure, but replace latency with energy as the target. This tests whether a model designed for latency prediction can be retargeted to energy.
+\review{\textbf{\be{NeuSight-style energy predictor}~\cite{neusight}:} We apply NeuSight's tile-based latency-prediction methodology, retaining its input features and MLP architecture while replacing only the prediction target with measured system energy. This tests whether directly retargeting a latency predictor is sufficient for system-energy prediction.}
 
 We omit the software-based estimator of Strubell et al.~\cite{strubell19} as it is outperformed by baselines such as IrEne~\cite{irene}.
 
@@ -305,9 +305,9 @@ Thus, the penalty for omitting communication, as in CodeCarbon and IrEne, is sma
 %\anshul{Anurag, why are below two paras part of this Ablation Study? They seem unrelated, no?}
 % \anshul{hmm, still not sure about where to place the ones below. can feature correlation move to end of subsection D to provide further evidence that energy alone isn't enough? if yes, then the rest of this subsection can stay as is with title changed to something like ``Comparison against NeuSight retargeted to energy'' and it could be moved above ablation studies}
 \subsection{Comparison Against NeuSight Retargeted to Energy}
-NeuSight~\cite{neusight} decomposes GPU kernels into tiles and uses MLPs to predict hardware utilization from compute, memory, and GPU architectural features, which is then used to estimate kernel latency under hardware performance bounds.
-We adapt its tile-based decomposition, features, and MLP architecture to predict measured system energy instead of latency.
-This adaptation yields 87.3\% average MAPE on Vicuna (Table~\ref{tab:neusight_energy_target}), indicating that latency-oriented features alone are insufficient for accurate system-level energy prediction.
+\review{NeuSight~\cite{neusight} decomposes GPU kernels into tiles and estimates latency from compute, memory, and GPU architecture features through an MLP-based utilization model and hardware performance bounds.
+We retain its tile decomposition, features, and regression architecture, changing only the prediction target from latency to measured system energy.
+The resulting 87.3\% average MAPE on Vicuna (Table~\ref{tab:neusight_energy_target}) illustrates the difficulty of directly repurposing latency prediction for system energy and motivates \sys{}'s energy-specific regressors and features capturing power and inter-GPU communication.}
 % \anshul{let us expand this a bit to explain how neusight works briefly and how we modify it to target energy}
 
 \begin{table}[t]
