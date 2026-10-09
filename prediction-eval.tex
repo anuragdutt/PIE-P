@@ -116,7 +116,7 @@ Mistral 48B                   & 17.83\% & Qwen 32B  & 14.90\% \\
 \label{tab:h200_model_results}
 \end{table}
 
-The H200 module-level MAPE values in Table~\ref{tab:h200_module_results} are all single digit, including a 9.25\% MAPE for AllReduce. This provides evidence that the communication-aware component remains effective when moving from PCIe-oriented platforms to the H200's higher-bandwidth NVLink environment. We do not claim a hardware-agnostic predictor - \sys{} is still calibrated per platform - but the same decomposition and feature design are reused without modification.
+The H200 module-level MAPE values in Table~\ref{tab:h200_module_results} are all single digit, including a 9.25\% MAPE for AllReduce. This provides evidence that the communication-aware component remains effective when moving from PCIe-oriented platforms to the H200's higher-bandwidth NVLink environment. \sys{} is calibrated afresh for every new hardware platform - but the same decomposition and feature design are reused without modification.
 
 \begin{table}[t]
 \centering
