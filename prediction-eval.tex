@@ -280,7 +280,7 @@ In the rest of the subsections, for brevity, we report results for the A6000 har
 \begin{figure*}[!t]
     \centering
     \includegraphics[width=\textwidth]{figures/pp_dp_comparison.pdf}
-    \vspace{-10pt}
+    \vspace{-18pt}
     \caption{MAPE results for all 4 model families under pipeline and data parallelism. Models with the largest parameter sizes in all 4 model families could not be compared for DP as they did not fit in GPU memory.}
     \label{fig:mape_comparison_other}
     \vspace{-9pt}
@@ -336,7 +336,7 @@ To isolate the communication model's contribution, we replace predicted communic
 \begin{figure*}[t]
     \centering
     \includegraphics[width=\textwidth]{figures/mape_all_model_families_no_comm_modeling.pdf}
-    \vspace{-12pt}
+    \vspace{-18pt}
     \caption{Ablation of explicit communication modeling. The ablated variant replaces \sys{}'s communication model with an average communication-power estimate for AllReduce events.}
     \label{fig:ablation_comm_modeling}
     \vspace{-9pt}
