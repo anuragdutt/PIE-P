@@ -26,4 +26,4 @@ A natural next step is to investigate whether limited target-platform profiling 
 We also plan to extend the \sys{} methodology to additional architectures and parallelism configurations, including FSDP-style parameter sharding~\cite{zhao2023fsdp} and context parallelism~\cite{liu2023ringattention,jacobs2023deepspeedulysses}.
 Encoder-decoder and mixture-of-experts models introduce different module structures and communication operations, while hybrid configurations combining tensor, pipeline, and data parallelism introduce multiple communication patterns.
 Predicting energy in these settings will require extending the model-tree decomposition and characterizing the associated computation, communication, and synchronization costs.
-The diversity of these execution and communication patterns warrants a dedicated study of their energy prediction characteristics.
+\review{The diversity of these execution and communication patterns warrants a dedicated study of their energy prediction characteristics.}
