@@ -112,14 +112,14 @@ Bytes transferred & Effective bandwidth\\
 \label{tab:features}
 \end{table}
 
-Table~\ref{tab:features} summarizes the complete feature set. Resource-utilization features capture system- and device-level activity during module execution, including CPU/GPU utilization, memory utilization, clock frequencies, and memory use. Execution features capture the workload configuration and observed execution cost, including batch size, sequence length, FLOPs per token, execution time, NVML-reported GPU energy, and GPU count. We additionally include intra-module kernel overlap duration capturing concurrent kernel executions belonging to the same module. Model-structure features such as feed-forward dimension, Transformer-block count, hidden size, attention-head count, and key-value-head count expose architectural differences that determine tensor shapes and how work is divided across ranks. For communication modules, \sys{} records the amount of data transferred and the effective bandwidth of each inter-GPU event. \review{Runtime features, including execution time, utilization, and NVML-reported GPU energy, are collected during an offline profiling pass of the target configuration.}
+Table~\ref{tab:features} summarizes the complete feature set. Resource-utilization features capture system- and device-level activity during module execution, including CPU/GPU utilization, memory utilization, clock frequencies, and memory use. Execution features capture the workload configuration and observed execution cost, including batch size, sequence length, FLOPs per token, execution time, NVML-reported GPU energy, and GPU count. We additionally include intra-module kernel overlap duration capturing concurrent kernel executions belonging to the same module. Model-structure features such as feed-forward dimension, Transformer-block count, hidden size, attention-head count, and key-value-head count expose architectural differences that determine tensor shapes and how work is divided across ranks. For communication modules, \sys{} records the amount of data transferred and the effective bandwidth of each inter-GPU event. Runtime features, including execution time, utilization, and NVML-reported GPU energy, are collected during an offline profiling pass of the target configuration.
 
 The feature representation is also designed to scale with GPU count. Instead of learning a separate set of coefficients for each physical GPU, \sys{} summarizes runtime features across participating GPUs using the mean, standard deviation, minimum, and maximum. The mean captures the overall activity level, while the spread and extrema expose imbalance and straggler behavior. These aggregates are combined with the static structural and communication features before training the module-specific regressors.
 
 \subsection{Communication Energy Modeling}
 \label{ss:design-communication}
 To model the communication energy introduced by parallel inference, \sys{} first treats inter-GPU communication events as explicit modules in the model tree. 
-For each communication event $e$, we trace the communication tensor sizes and calculate network transfer bytes sent ($B_{e}^{\mathrm{out}}$) and received ($B_{e}^{\mathrm{in}}$) by each GPU and use an offline-calibrated $\alpha$-$\beta$ model~\cite{hockney1988parallel2} to estimate the communication latency as:
+For each communication event $e$, we trace the communication tensor sizes and calculate network transfer bytes sent ($B_{e}^{\mathrm{out}}$) and received ($B_{e}^{\mathrm{in}}$) by each GPU and use a calibrated $\alpha$-$\beta$ model~\cite{hockney1988parallel2} to estimate the communication latency as:
 
 \vspace{-2pt}
 \begin{equation}
@@ -133,7 +133,7 @@ B_{e}^{\mathrm{out}} + B_{e}^{\mathrm{in}}
 \vspace{-2pt}
 \end{equation}
 
-Here $o$ denotes the communication operation (e.g., AllReduce or point-to-point transfer), $p$ is the number of GPUs, $\alpha_{o,p}$ captures fixed startup and synchronization overhead, and $\beta_{o,p}$ captures the message-size-dependent transfer cost. For each event we define the per-GPU communication volume as $V_e=B_e^{\mathrm{out}}+B_e^{\mathrm{in}}$. We calibrate the model offline for every communication operation type and GPU count by sweeping communication volumes, recording the observed duration $T_e^{\mathrm{obs}}$, and fitting $T_e^{\mathrm{obs}}=\alpha_{o,p}+\beta_{o,p}V_e$. The corresponding effective bandwidth is $B^{\mathrm{eff}}_{o,p}=1/\beta_{o,p}$. This calibration is performed once per hardware/topology and is then reused by the predictor.
+Here $o$ denotes the communication operation (e.g., AllReduce or point-to-point transfer), $p$ is the number of GPUs, $\alpha_{o,p}$ captures fixed startup cost of the interconnect (NVLINK, PCIe etc.) and synchronization overhead, and $\beta_{o,p}$ captures the message-size-dependent transfer cost. For each event we define the per-GPU communication volume as $V_e=B_e^{\mathrm{out}}+B_e^{\mathrm{in}}$. We calibrate the model offline for every communication operation type and GPU count by sweeping communication volumes, recording the observed duration $T_e^{\mathrm{obs}}$, and fitting $T_e^{\mathrm{obs}}=\alpha_{o,p}+\beta_{o,p}V_e$. The corresponding effective bandwidth is $B^{\mathrm{eff}}_{o,p}=1/\beta_{o,p}$. This calibration is performed once per hardware/topology and is then reused by the predictor.
 
 For ring AllReduce, the communication volume follows directly from the ReduceScatter and AllGather phases. If the communicated tensor has size $S_e$ bytes, each GPU sends and receives $(p-1)S_e/p$ bytes in each phase; therefore the total per-GPU communication volume is
 \begin{equation}
@@ -151,7 +151,7 @@ The resulting communication-module estimate is then composed with the compute-mo
 \subsection{Measurement and Data Collection}
 \label{ss:design-measurement}
 %\aruna{can this be moved to after the regression discussion?}
-\sys{} uses offline measurements to calibrate the communication-latency and average-power parameters described in \S\ref{ss:design-communication}. For each communication operation and GPU configuration, we record observed durations and associated power over a range of data transfer sizes. The identification of these communication events depends on the parallelism strategy, as detailed below.
+\sys{} uses the collected measurements to calibrate the communication-latency and average-power parameters described in \S\ref{ss:design-communication}. For each communication operation and GPU configuration, we record observed durations and associated power over a range of data transfer sizes. The identification of these communication events depends on the parallelism strategy, as detailed below.
 
 \textbf{Tensor parallelism.} We profile ring AllReduce operations, comprising the ReduceScatter and AllGather phases in which GPUs exchange tensor chunks with neighboring ranks. Ranks may reach a collective at different times due to runtime scheduling, cache behavior, and memory-access variation, so observed AllReduce durations include transfer and synchronization/waiting overheads. These measurements calibrate the operation-specific $\alpha$-$\beta$ latency parameters. For a target AllReduce event, \sys{} derives the per-GPU communication volume from the tensor size and ring exchange pattern, predicts its duration using the calibrated parameters, and estimates communication energy using calibrated average power.
 
@@ -161,11 +161,8 @@ The resulting communication-module estimate is then composed with the compute-mo
 
 For compute modules, \sys{} records (i) resource-specific signals that summarize system/GPU activity, and (ii) model-specific descriptors extracted from the LLM configuration.
 
-Repeated offline measurements form the training dataset for the compute module-level regressors (\S\ref{ss:design-prediction}). Repeated communication measurements instead support calibration of the latency and power parameters under run-to-run synchronization variability for communication modules.
-\review{\sys{} performs communication calibration and module-level training measurements offline.
-For each target model and inference configuration, \sys{} profiles a single forward pass to collect the runtime and resource-utilization features required for prediction.
-These features are used to estimate full-system energy without requiring a full-system energy measurement of the target configuration.
-Subsequent inference runs incur no additional online profiling overhead.}
+These features then form the training dataset for the compute module-level regressors (\S\ref{ss:design-prediction}). Communication feature measurements instead support calibration of the latency and power parameters under run-to-run synchronization variability for communication modules and the interconnect (NVLINK / PCIe).
+
 
 \subsection{Multi-Level Regression}
 \label{ss:design-prediction}

@@ -64,7 +64,7 @@ We omit the software-based estimator of Strubell et al.~\cite{strubell19} as it 
 \subsection{Summary of Results}
 %{\smallskip\noindent\textbf{Summary of results.}
 \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
-\item \textbf{Tensor parallelism:} \sys{} obtains average MAPE of \review{12.9\%} on A6000, 15.5\% on B40, and 16.8\% on the representative H200 evaluation.
+\item \textbf{Tensor parallelism:} \sys{} obtains average MAPE of 12.9\% on A6000, 15.5\% on B40, and 16.8\% on the representative H200 evaluation.
 \item \textbf{Pipeline and data parallelism:} Average MAPE is 12.2\% and 10.8\%, respectively.
 %\item \textbf{Generalization:} Leave-one-variant-out MAPE ranges from 15.8-24.5\% on A6000 and 11.8-23.5\% on B40. Leave-one-family-out MAPE ranges from 24.1-27.6\% and 12.2-23.1\%, respectively.
 %\anshul{Anurag, maybe we add separate numbers for each LOO mechanism above as 28\% looks bad}
@@ -81,11 +81,11 @@ We omit the software-based estimator of Strubell et al.~\cite{strubell19} as it 
 Figures~\ref{fig:mape_comparison} and~\ref{fig:b40_mape_tensor_parallelism} show the MAPE for \sys{} and the baselines under tensor parallelism on A6000 and B40 GPUs, respectively.
 For each model family (e.g., Vicuna), we train a regressor on 70\% of module-level measurements across all variants (e.g., 7B), batch sizes, and input lengths, and evaluate on the remaining 30\%, following the training protocol in \S\ref{ss:esetup}.
 
-We see that \be{\sys{} consistently achieves the lowest MAPE in all cases} on the A6000 platform, with an average of \review{12.9\%}.
-By contrast, CodeCarbon incurs an average MAPE of \review{29.9\%, which is 2.3$\times$ the MAPE of \sys{}.}
+We see that \be{\sys{} consistently achieves the lowest MAPE in all cases} on the A6000 platform, with an average of 12.9\%.
+By contrast, CodeCarbon incurs an average MAPE of 29.9\%, which is 2.3$\times$ the MAPE of \sys{}.
 The poor prediction of CodeCarbon is because of its reliance on coarse GPU profiling and slow sampling, which misses the energy use of fine-grained, multi-GPU communication events.
-IrEne also performs poorly, with an average MAPE of \review{42.8\% (3.3$\times$ that of \sys{})} because it ignores communication energy.
-Finally, Wilkins et al. consistently incurs high MAPE, with an average of \review{55.9\% (4.3$\times$ that of \sys{})} because it solely uses a token-in/token-out regression that ignores inter-GPU communication.
+IrEne also performs poorly, with an average MAPE of 42.8\% (3.3$\times$ that of \sys{}) because it ignores communication energy.
+Finally, Wilkins et al. consistently incurs high MAPE, with an average of 55.9\% (4.3$\times$ that of \sys{}) because it solely uses a token-in/token-out regression that ignores inter-GPU communication.
 
 The B40 results in Figure~\ref{fig:b40_mape_tensor_parallelism} show similar trends on a different GPU platform with \sys{} achieving an average MAPE of 15.5\%, substantially better than the other alternatives.
 On closer inspection we observe that the \be{performance gap between \sys{} and the baselines widens with increasing parallelization}.
@@ -166,7 +166,7 @@ Mistral 48B & 39.0\% & 51.3\% & Qwen 32B & 38.3\% & 56.5\% \\
 \vspace{-5pt}
 \end{table}
 
-NVML generalization is worse still. When the NVML regressor is trained on the remaining variants in a family and tested on an excluded model, MAPE rises to 47.4-57.3\%, averaging \review{51.4\%}, compared with 15.8-24.5\% for \sys{} on the same A6000 generalization task. The gap becomes larger when the held-out model changes tensor shapes, communication behavior, and non-GPU system energy. We found the same qualitative trend on B40.
+NVML generalization is worse still. When the NVML regressor is trained on the remaining variants in a family and tested on an excluded model, MAPE rises to 47.4-57.3\%, averaging 51.4\%, compared with 15.8-24.5\% for \sys{} on the same A6000 generalization task. The gap becomes larger when the held-out model changes tensor shapes, communication behavior, and non-GPU system energy. We found the same qualitative trend on B40.
 
 \smallskip\noindent\textbf{Feature correlation.} Across Vicuna configurations, total measured energy correlates with NVML GPU energy ($\rho=0.633$-$0.762$), batch size ($\rho=0.735$-$0.737$), execution time ($\rho=0.658$-$0.664$), and memory usage ($\rho=0.656$-$0.663$). These correlations, together with the higher prediction errors of NVML-based regression, show that GPU energy alone is insufficient and motivate the use of additional workload and runtime features.
 
@@ -395,4 +395,4 @@ Both per-token energy and inference time increase with model size (7B to 33B), b
 For smaller models such as Vicuna-7B, increasing GPU count from 2 to 4 reduced energy consumption by 43\%, but improved inference time by only 20\%, highlighting diminishing returns. In contrast, larger models like Vicuna-33B benefited more significantly, with a 33\% reduction in energy and a 50\% improvement in speed.
 We also extended this analysis to the Qwen family of models, where we found a different scaling efficiency: Qwen-32B achieved 40\% energy reduction when scaling from 2 to 4 GPUs, compared to 33\% for Vicuna-33B, while maintaining similar speedups.
 
-In effect, the energy impact of parallelization is not obvious. Without accurate predictions, model developers require numerous trial-and-error experiments to make energy-conscious parallelization decisions. \review{By using one-time runtime profiling rather than repeated full-system energy measurements, \sys{} provides energy estimates that help developers compare candidate parallelization configurations.}
+In effect, the energy impact of parallelization is not obvious. Without accurate predictions, model developers require numerous trial-and-error experiments to make energy-conscious parallelization decisions.
