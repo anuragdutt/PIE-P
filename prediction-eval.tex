@@ -28,6 +28,24 @@ The full tensor-parallel evaluation covers A6000 and B40. A representative model
 We focus our module-level, generalization, and ablation analyses on tensor parallelism, which presents a harder case for energy prediction because inter-GPU collectives and synchronization recur within Transformer blocks.
 We evaluate pipeline and data parallelism separately to assess their distinct communication patterns.
 
+\begin{figure*}[!ht]
+    \centering
+    \includegraphics[width=\textwidth]{figures/mape_all_model_families.pdf}
+    \vspace{-18pt}
+    \caption{MAPE results across model families for \sys{} and the baselines under tensor parallelism on A6000.}
+    \label{fig:mape_comparison}
+    \vspace{-5pt}
+\end{figure*}
+
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/b40_mape_tensor_parallelism_with_codecarbon.pdf}
+    \vspace{-18pt}
+    \caption{MAPE results across model families for \sys{} and the baselines under tensor parallelism on B40.}
+    \label{fig:b40_mape_tensor_parallelism}
+    \vspace{-5pt}
+\end{figure*}
+
 
 \smallskip\noindent\textbf{Baselines.} We experimentally compare \sys{} against the following prediction baselines.\\
 % \anshul{didn't understand this statement above, can we just remove it?}
@@ -57,28 +75,11 @@ We omit the software-based estimator of Strubell et al.~\cite{strubell19} as it 
 
 %\textbf{Use case:} finally, we use \sys{} to expose the latency--energy trade-off across model sizes and GPU counts, showing how accurate prediction can replace repeated trial-and-error measurements when selecting a deployment.}
 
-\begin{figure*}[!ht]
-    \centering
-    \includegraphics[width=\textwidth]{figures/mape_all_model_families.pdf}
-    \vspace{-18pt}
-    \caption{MAPE results across model families for \sys{} and the baselines under tensor parallelism on A6000.}
-    \label{fig:mape_comparison}
-    \vspace{-9pt}
-\end{figure*}
-
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth]{figures/b40_mape_tensor_parallelism_with_codecarbon.pdf}
-\vspace{-18pt}
-\caption{MAPE results across model families for \sys{} and the baselines under tensor parallelism on B40.}
-\label{fig:b40_mape_tensor_parallelism}
-\vspace{-9pt}
-\end{figure*}
 
 \subsection{Energy Prediction for Tensor Parallelism}
 \label{sec:model_prediction}
 Figures~\ref{fig:mape_comparison} and~\ref{fig:b40_mape_tensor_parallelism} show the mean absolute percentage error (MAPE) for \sys{} and the baselines under tensor parallelism on A6000 and B40 GPUs, respectively.
-For each model family (e.g., Vicuna), we train a regressor on 70\% of module-level predictions across all variants (e.g., 7B), batch sizes, and input lengths, and evaluate on the remaining 30\%, following the training protocol in \S\ref{ss:esetup}.
+For each model family (e.g., Vicuna), we train a regressor on 70\% of module-level measurements across all variants (e.g., 7B), batch sizes, and input lengths, and evaluate on the remaining 30\%, following the training protocol in \S\ref{ss:esetup}.
 
 We see that \be{\sys{} consistently achieves the lowest MAPE in all cases} on the A6000 platform, with an average of 17.6\%.
 By contrast, CodeCarbon incurs an average MAPE of 28.49\%, which is about 1.7$\times$ the MAPE of \sys{}.
@@ -109,9 +110,9 @@ Mistral 8B                    & 16.25\% & Qwen 8B   & 16.07\% \\
 Mistral 48B                   & 17.83\% & Qwen 32B  & 14.90\% \\
 \bottomrule
 \end{tabular}
-\vspace{3pt}
+\vspace{5pt}
 \caption{Model-level results for \sys{} on 2$\times$ NVIDIA H200 GPUs.}
-\vspace{-6pt}
+\vspace{-5pt}
 \label{tab:h200_model_results}
 \end{table}
 
@@ -133,14 +134,14 @@ LayerNorm/RMSNorm                      & 8.12\% \\
 \rowcolor{rowblue} LLMEmbedding        & 7.78\% \\
 \bottomrule
 \end{tabular}
-\vspace{3pt}
+\vspace{5pt}
 \caption{Module-level MAPE for \sys{} on NVIDIA H200 GPUs.}
-\vspace{-9pt}
+\vspace{-5pt}
 \label{tab:h200_module_results}
 \end{table}
 
 \subsection{NVML Baseline Results}
-Table~\ref{tab:nvml_proxy_combined} reports the comparison with the NVML-based full-system energy regressor on A6000. In the direct setting, Vicuna ranges from 29.8-33.4\% MAPE, Mistral from 39.0-44.2\%, Llama from 28.5-31.3\%, and Qwen from 38.0-42.4\%. These errors are substantially larger than \sys{}, showing that GPU-board energy alone is not sufficient to capture host energy, architecture-dependent communication volume, and synchronization behavior.
+Table~\ref{tab:nvml_proxy_combined} reports the comparison with the NVML-based full-system energy regressor on A6000. In the direct setting, Vicuna ranges from 29.8-33.4\% MAPE, Mistral from 39.0-44.2\%, Llama from 28.5-31.3\%, and Qwen from 38.0-42.4\%. These errors are substantially larger than \sys{}'s, showing that GPU-board energy alone is not sufficient to capture host energy, architecture-dependent communication volume, and synchronization behavior.
 
 \begin{table}[t]
 \centering
@@ -159,7 +160,7 @@ Mistral 8B & 44.2\% & 57.3\% & Qwen 8B & 42.4\% & 51.1\% \\
 Mistral 48B & 39.0\% & 51.3\% & Qwen 32B & 38.3\% & 56.5\% \\
 \bottomrule
 \end{tabular}
-\vspace{4pt}
+\vspace{5pt}
 \caption{NVML-based regression on A6000. ``Direct'' uses NVML-reported GPU energy to predict total-system energy; ``LOO'' evaluates leave-one-variant-out generalization.}
 \label{tab:nvml_proxy_combined}
 \vspace{-5pt}
@@ -191,7 +192,7 @@ LayerNorm/RMSNorm & 6.4\% & 7.3\% & 3.2\% & 7.8\% \\
 \rowcolor{rowblue} LLMEmbedding & 9.9\% & 9.6\% & 7.1\% & 8.2\% \\
 \bottomrule
 \end{tabular}
-\vspace{3pt}
+\vspace{5pt}
 \caption{Module-level MAPE for Vicuna on A6000 and B40.}
 \label{tab:module_mape_combined}
 \vspace{-5pt}
@@ -214,7 +215,7 @@ Mistral & 11.01\% & 8.8\% & 245 & GQA, SwiGLU \\
 Qwen & 9.03\% & 5.1\% & 213 & MQA, RoPE \\
 \bottomrule
 \end{tabular}
-\vspace{4pt}
+\vspace{5pt}
 \caption{Module-level prediction error across model families on A6000 and B40. GFLOPs denotes FLOPs per Transformer block.}
 \label{tab:block_errors_combined}
 \vspace{-5pt}
@@ -226,7 +227,7 @@ Qwen & 9.03\% & 5.1\% & 213 & MQA, RoPE \\
     \vspace{-18pt}
     \caption{MAPE results for all 4 model families under pipeline and data parallelism. Models with the largest parameter sizes in all 4 model families could not be compared for DP as they did not fit in GPU memory.}
     \label{fig:mape_comparison_other}
-    \vspace{-9pt}
+    \vspace{-5pt}
 \end{figure*}
 
 \begin{table}[t]
@@ -245,7 +246,7 @@ Mistral & 27.0\% & 56.5\% & 15.1\% & 71.2\% \\
 Qwen & 27.6\% & 58.4\% & 12.2\% & 62.9\% \\
 \bottomrule
 \end{tabular}
-\vspace{4pt}
+\vspace{5pt}
 \caption{Leave-one-family-out generalization on A6000 and B40.}
 \label{tab:family_generalization_combined}
 \vspace{-5pt}
@@ -253,7 +254,7 @@ Qwen & 27.6\% & 58.4\% & 12.2\% & 62.9\% \\
 
 \subsection{Generalization Across Model Variants and Families}
 We now evaluate whether \sys{} generalizes to models that are excluded from training.
-In leave-one-variant-out evaluation, one model variant (e.g., Vicuna 7B vs.\ Vicuna 33B) is held out and predicted using regressors trained on the remaining variants from the same family.
+In leave-one-variant-out evaluation, one model variant (e.g., Vicuna 7B or Vicuna 33B) is held out and predicted using regressors trained on the remaining variants from the same family.
 
 Table~\ref{tab:variant_generalization_combined} reports the complete leave-one-variant-out results. \sys{} achieves 15.8-24.5\% MAPE on A6000 and 11.8-23.5\% on B40. The larger Mistral and Llama variants are generally more difficult, but the predictor remains stable across model scales. We separately test workload extrapolation across batch sizes: MAPE ranges from 16.89-21.82\% with an average of 19.05\%. Generalizing from batch size 16 to 32 gives 19.33\% average MAPE, while the reverse direction gives 18.77\%, suggesting that the execution and structural features capture workload-energy scaling rather than merely memorizing one operating point.
 
@@ -274,7 +275,7 @@ Mistral 8B & 21.17\% & 14.41\% & Qwen 8B & 20.15\% & 14.25\% \\
 Mistral 48B & 24.52\% & 15.81\% & Qwen 32B & 18.98\% & 13.21\% \\
 \bottomrule
 \end{tabular}
-\vspace{4pt}
+\vspace{5pt}
 \caption{Leave-one-variant-out prediction MAPE for \sys{} on A6000 and B40.}
 \label{tab:variant_generalization_combined}
 \vspace{-5pt}
@@ -298,7 +299,7 @@ In the rest of the subsections, for brevity, we report results for the A6000 har
     \vspace{-18pt}
     \caption{Ablation of explicit communication modeling. The ablated variant replaces \sys{}'s communication model with an average communication-power estimate for AllReduce events.}
     \label{fig:ablation_comm_modeling}
-    \vspace{-9pt}
+    \vspace{-5pt}
 \end{figure*}
 
 \subsection{Results for Pipeline and Data Parallelism}
@@ -347,9 +348,10 @@ Vicuna 13B                    & 93.24\% \\
 \rowcolor{rowblue} Vicuna 33B & 89.38\% \\
 \bottomrule
 \end{tabular}
-\vspace{3pt}
+\vspace{5pt}
 \caption{MAPE for a NeuSight-style latency prediction framework when energy is used as the prediction target.}
 \label{tab:neusight_energy_target}
+\vspace{-5pt}
 \end{table}
 
 \subsection{Ablation Study: Communication Model}
@@ -379,7 +381,7 @@ This shows that energy prediction for parallel inference is not simply a model-l
     \vspace{-9pt}
     \caption{Predicted trade-off between inference time per token and energy per token (log scale) for Vicuna under tensor parallelism.}
     \label{fig:pareto_plot}
-    \vspace{-9pt}
+    \vspace{-5pt}
 \end{figure}
 
 We now present a use case to highlight the applicability of \sys{} in practice.

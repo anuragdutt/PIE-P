@@ -1,7 +1,19 @@
+\begin{figure*}[t]
+\centering
+\includegraphics[
+    width=\textwidth,
+    height=0.20\textheight,
+    keepaspectratio
+]{figures/piepv6.pdf}
+% \vspace{-5pt}
+\caption{\sys{} architecture showing: (1) parallelism-aware decomposition, (2) features for module-level prediction, (3) communication energy modeling, (4) measurement and data collection, and (5) multi-level regression.}
+\label{fig:piep_architecture}
+\vspace{-10pt}
+\end{figure*}
 
 Figure~\ref{fig:piep_architecture} presents an overview of the \sys{} architecture. \sys{} 
 first decomposes the LLM into individual constituent modules (\S\ref{ss:design-decomposition}), allowing \sys{} to directly model the energy consumption of compute and communication in parallel inference.
-Since the number of GPUs involved in parallel inference influence the energy consumption and tensor shapes of individual modules, \sys{} makes use of resource- and architecture features for each module based on the parallelization strategy (\S\ref{ss:design-features}). % simple utilization-based heuristics lack this ability.
+Since the number of GPUs involved in parallel inference influences the energy consumption and tensor shapes of individual modules, \sys{} makes use of resource and architecture features for each module based on the parallelization strategy (\S\ref{ss:design-features}). % simple utilization-based heuristics lack this ability.
 \sys{} then explicitly predicts the energy used for GPU communication (\S\ref{ss:design-communication}) and carefully measures both computation and communication energy to collect ground truth (\S\ref{ss:design-measurement}). % communication latency of multi-GPU inference as a function of inter-GPU bandwidth and the data transfer patterns .
 %%%builds on the $\alpha$--$\beta$ communication model~\cite{hockney1988parallel2}, commonly employed for performance modeling in parallel computing, to predict communication latency as a function of inter-GPU bandwidth and the data transfer rate (\S\ref{ss:design-communication}).
 %This predicted latency is then used as an input to predict communication energy.
@@ -14,18 +26,7 @@ Finally, \sys{} builds a multi-level regressor to combine these contributions to
 %%The following subsections describe our key components, with each subsection corresponding to the annotation in Figure~\ref{fig:piep_architecture}.
 
 
-\begin{figure*}[t]
-\centering
-\includegraphics[
-    width=\textwidth,
-    height=0.20\textheight,
-    keepaspectratio
-]{figures/piepv6.pdf}
-\vspace{-9pt}
-\caption{\sys{} architecture showing: (1) parallelism-aware decomposition, (2) features for module-level prediction, (3) communication energy modeling, (4) measurement and data collection, and (5) multi-level regression.}
-\label{fig:piep_architecture}
-\vspace{-9pt}
-\end{figure*}
+
 
 
 \subsection{Parallelism-Aware Decomposition into Compute and Communication Modules}
@@ -34,7 +35,7 @@ Finally, \sys{} builds a multi-level regressor to combine these contributions to
 %The \sys{} predictor is \emph{fine-grained by design}: 
 
 %We first decompose an inference run into constituent units (i.e., modules) whose energy can be estimated and then composed into an end-to-end model-level prediction. %To systematically identify these constituent modules and their aggregation, 
-\sys{} uses a \emph{model-tree abstraction}, a graph-structured representation to decompose the inference run into constituent units (i.e., modules). Unlike prior work (e.g., IrEne~\cite{irene}) that only focus on compute modules, the \sys{} model tree decomposes a model using both compute {\em and} communication modules. 
+\sys{} uses a \emph{model-tree abstraction}, a graph-structured representation to decompose the inference run into constituent units (i.e., modules). Unlike prior works (e.g., IrEne~\cite{irene}) that only focuses on compute modules, the \sys{} model tree decomposes a model using both compute {\em and} communication modules. 
 %To account for communication energy inherent in parallel inference, \sys{} decomposes the model into both compute {\em and} communication modules; this is different from the similar tree representations used by prior works~\cite{irene} that only focus on single-GPU execution.
 
 Concretely, \sys{} represents an LLM inference run as a hierarchical composition of modules, where each Transformer block is decomposed into child modules (e.g., AllReduce, Attention, MLP, normalization, embedding, output). 
@@ -107,7 +108,7 @@ Bytes transferred & Effective bandwidth\\
 \end{tabular}
 \vspace{3pt}
 \caption{Features used by \sys{} for prediction.}
-\vspace{-9pt}
+\vspace{-15pt}
 \label{tab:features}
 \end{table}
 
