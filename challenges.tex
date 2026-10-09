@@ -21,7 +21,7 @@ There are three main parallelism strategies that are widely used for LLM inferen
 Pipeline parallelism partitions layers across stages, and each stage sends its output activations to the next stage using point-to-point communication. Communication therefore occurs primarily at stage boundaries as activations move through the pipeline.
 
 In data parallelism, each replica independently executes the full model on a different portion of the workload. Communication is therefore limited during the forward computation, with collective operations such as AllGather used when outputs from multiple replicas need to be consolidated.
-\aruna{should we say something about other parallelism such as hybrid, FSDP etc and say our work can be potentially extended to them but we leave it to future work?}
+% \aruna{should we say something about other parallelism such as hybrid, FSDP etc and say our work can be potentially extended to them but we leave it to future work?}
 %Our framework can be extended to other strategies such as hybrid parallelism that combines existing parallelism methods; we leave this to future work.
 %\medskip
 %\subsection*{Challenges in predicting parallel inference energy}

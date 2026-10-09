@@ -248,7 +248,7 @@ Generalizing to an entirely unseen family is harder than holding out one variant
 
 The lower prediction error compared to IrEne demonstrates that reusable module-level predictors, structural features, and explicit communication modeling help \sys{} generalize across unseen LLM families.
 
-\aruna{The results show that learning using reusable module types and structural features transfer better across LLM architectures than a single-GPU hierarchy that doesnt take into account communication.}
+% \aruna{The results show that learning using reusable module types and structural features transfer better across LLM architectures than a single-GPU hierarchy that doesnt take into account communication.}
 
 \begin{table}[t]
 \centering
@@ -279,7 +279,7 @@ In the rest of the subsections, for brevity, we report results for the A6000 har
 
 \begin{figure*}[!t]
     \centering
-    \includegraphics[height=0.22\textwidth,width=0.9\textwidth]{figures/pp_dp_comparison.pdf}
+    \includegraphics[width=\textwidth]{figures/pp_dp_comparison.pdf}
     \vspace{-10pt}
     \caption{MAPE results for all 4 model families under pipeline and data parallelism. Models with the largest parameter sizes in all 4 model families could not be compared for DP as they did not fit in GPU memory.}
     \label{fig:mape_comparison_other}
