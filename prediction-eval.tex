@@ -36,13 +36,13 @@ We profile batch sizes 8, 16, 32, and 64 and output sequence lengths 512 and 102
 %Aruna: I made it a bit simpler but maintained the overall structure}
 %\aruna{I guess this can be combined with the discussion earlier on using representative models. Not sure if we need a repeat. Anshul?}
 The full tensor-parallel evaluation covers A6000 and B40. A representative model subset on H200 tests the same methodology on NVLink-connected GPUs. 
-\anshul{below sentence is too dense, try splitting into two}
+% \anshul{below sentence is too dense, try splitting into two}
 \review{We focus our module-level, generalization, and ablation analyses on tensor parallelism, where communication collectives recur within Transformer blocks.
 We evaluate pipeline and data parallelism separately to examine their distinct communication patterns.}
 
 
 \smallskip\noindent\review{\textbf{Baselines.}} \\
-\anshul{didn't understand this statement above, can we just remove it?}
+% \anshul{didn't understand this statement above, can we just remove it?}
 \noindent\textbf{\be{IrEne}~\cite{irene}:} A hierarchical energy prediction framework for single-GPU execution and the closest methodological baseline to \sys{}. IrEne represents execution at mathematical-operation, machine-learning-operation, and module levels, learns leaf-level energy predictors from runtime resource utilization and model specifications, and recursively combines child predictions to obtain higher-level energy estimates. We use IrEne in the same inference configurations as \sys{}; its key limitation for our setting is that the hierarchy does not represent inter-GPU communication as a first-class module. \\
 \textbf{\be{IrEne with historical communication energy}:} We augment IrEne's estimate with communication energy from historical measurements for the corresponding deployment. This comparison isolates the benefit of adding measured communication energy without PIE-P's communication predictor. \\
 \textbf{\be{CodeCarbon}~\cite{codecarbon}:} A software-based energy/\(\mathrm{CO_2}\) estimator that integrates telemetry-derived power over time, including GPU measurements from NVML and host measurements where available. It provides a commonly used software-only estimate, but does not explicitly represent the communication structure introduced by parallel inference. \\
@@ -61,7 +61,7 @@ We omit the software-based estimator of Strubell et al.~\cite{strubell19} as it 
 \item \textbf{Tensor parallelism:} \sys{} obtains average MAPE of 17.6\% on A6000, 15.5\% on B40, and 16.8\% on the representative H200 evaluation.
 \item \textbf{Pipeline and data parallelism:} Average MAPE is 12.2\% and 10.8\%, respectively.
 %\item \textbf{Generalization:} Leave-one-variant-out MAPE ranges from 15.8-24.5\% on A6000 and 11.8-23.5\% on B40. Leave-one-family-out MAPE ranges from 24.1-27.6\% and 12.2-23.1\%, respectively.
-\anshul{Anurag, maybe we add separate numbers for each LOO mechanism above as 28\% looks bad}
+%\anshul{Anurag, maybe we add separate numbers for each LOO mechanism above as 28\% looks bad}
 \item \textbf{NVML baseline:} NVML-based regression incurs 28.5-44.2\% MAPE on A6000.
 \item \textbf{Module-level prediction:} Self-Attention and MLP errors remain below 12\% on A6000 and below 9\% on B40; AllReduce incurs 17.3-19.4\% MAPE.
 \item \textbf{Additional comparisons:} Replacing explicit communication modeling increases MAPE from 12.9\% to 34.0\%. Removing the model tree yields 60.8-115.1\% MAPE, while retargeting NeuSight to energy yields 87.3\% MAPE on the evaluated variants.
