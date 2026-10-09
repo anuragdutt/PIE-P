@@ -1,20 +1,6 @@
-\begin{figure*}[!ht]
-    \centering
-    \includegraphics[width=\textwidth]{figures/mape_all_model_families.pdf}
-    \vspace{-18pt}
-    \caption{MAPE results across model families for \sys{} and the baselines under tensor parallelism on A6000.}
-    \label{fig:mape_comparison}
-    \vspace{-9pt}
-\end{figure*}
 
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth]{figures/b40_mape_tensor_parallelism_with_codecarbon.pdf}
-\vspace{-18pt}
-\caption{MAPE results across model families for \sys{} and the baselines under tensor parallelism on B40.}
-\label{fig:b40_mape_tensor_parallelism}
-\vspace{-9pt}
-\end{figure*}
+
+
 
 Our evaluation demonstrates \sys{}'s effectiveness across four LLM model families across varying sizes (7B-70B): Vicuna, Mistral, Llama, and Qwen~\cite{vicuna, jiang2023mistral7b, touvron2023llama, qwen}.
 We evaluate tensor, pipeline, and data parallelism on PCIe- and NVLink-connected GPU platforms.
@@ -70,6 +56,24 @@ We omit the software-based estimator of Strubell et al.~\cite{strubell19} as it 
 \end{itemize}
 
 %\textbf{Use case:} finally, we use \sys{} to expose the latency--energy trade-off across model sizes and GPU counts, showing how accurate prediction can replace repeated trial-and-error measurements when selecting a deployment.}
+
+\begin{figure*}[!ht]
+    \centering
+    \includegraphics[width=\textwidth]{figures/mape_all_model_families.pdf}
+    \vspace{-18pt}
+    \caption{MAPE results across model families for \sys{} and the baselines under tensor parallelism on A6000.}
+    \label{fig:mape_comparison}
+    \vspace{-9pt}
+\end{figure*}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/b40_mape_tensor_parallelism_with_codecarbon.pdf}
+\vspace{-18pt}
+\caption{MAPE results across model families for \sys{} and the baselines under tensor parallelism on B40.}
+\label{fig:b40_mape_tensor_parallelism}
+\vspace{-9pt}
+\end{figure*}
 
 \subsection{Energy Prediction for Tensor Parallelism}
 \label{sec:model_prediction}
@@ -216,6 +220,37 @@ Qwen & 9.03\% & 5.1\% & 213 & MQA, RoPE \\
 \vspace{-5pt}
 \end{table}
 
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/pp_dp_comparison.pdf}
+    \vspace{-18pt}
+    \caption{MAPE results for all 4 model families under pipeline and data parallelism. Models with the largest parameter sizes in all 4 model families could not be compared for DP as they did not fit in GPU memory.}
+    \label{fig:mape_comparison_other}
+    \vspace{-9pt}
+\end{figure*}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{2.8pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Family} & \multicolumn{2}{c}{\textbf{A6000}} & \multicolumn{2}{c}{\textbf{B40}} \\
+ & \textbf{\sys{}} & \textbf{IrEne} & \textbf{\sys{}} & \textbf{IrEne} \\
+\midrule
+\rowcolor{rowblue} Vicuna & 24.1\% & 49.3\% & 13.2\% & 63.8\% \\
+Mistral & 27.0\% & 56.5\% & 15.1\% & 71.2\% \\
+\rowcolor{rowblue} Llama & 26.1\% & 55.3\% & 23.1\% & 113.3\% \\
+Qwen & 27.6\% & 58.4\% & 12.2\% & 62.9\% \\
+\bottomrule
+\end{tabular}
+\vspace{4pt}
+\caption{Leave-one-family-out generalization on A6000 and B40.}
+\label{tab:family_generalization_combined}
+\vspace{-5pt}
+\end{table}
+
 \subsection{Generalization Across Model Variants and Families}
 We now evaluate whether \sys{} generalizes to models that are excluded from training.
 In leave-one-variant-out evaluation, one model variant (e.g., Vicuna 7B vs.\ Vicuna 33B) is held out and predicted using regressors trained on the remaining variants from the same family.
@@ -253,41 +288,23 @@ The lower prediction error compared to IrEne demonstrates that reusable module-l
 
 % \aruna{The results show that learning using reusable module types and structural features transfer better across LLM architectures than a single-GPU hierarchy that doesnt take into account communication.}
 
-\begin{table}[t]
-\centering
-\small
-\setlength{\tabcolsep}{2.8pt}
-\renewcommand{\arraystretch}{1.05}
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-\textbf{Family} & \multicolumn{2}{c}{\textbf{A6000}} & \multicolumn{2}{c}{\textbf{B40}} \\
- & \textbf{\sys{}} & \textbf{IrEne} & \textbf{\sys{}} & \textbf{IrEne} \\
-\midrule
-\rowcolor{rowblue} Vicuna & 24.1\% & 49.3\% & 13.2\% & 63.8\% \\
-Mistral & 27.0\% & 56.5\% & 15.1\% & 71.2\% \\
-\rowcolor{rowblue} Llama & 26.1\% & 55.3\% & 23.1\% & 113.3\% \\
-Qwen & 27.6\% & 58.4\% & 12.2\% & 62.9\% \\
-\bottomrule
-\end{tabular}
-\vspace{4pt}
-\caption{Leave-one-family-out generalization on A6000 and B40.}
-\label{tab:family_generalization_combined}
-\vspace{-5pt}
-\end{table}
+
 
 In the rest of the subsections, for brevity, we report results for the A6000 hardware.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/mape_all_model_families_no_comm_modeling.pdf}
+    \vspace{-18pt}
+    \caption{Ablation of explicit communication modeling. The ablated variant replaces \sys{}'s communication model with an average communication-power estimate for AllReduce events.}
+    \label{fig:ablation_comm_modeling}
+    \vspace{-9pt}
+\end{figure*}
 
 \subsection{Results for Pipeline and Data Parallelism}
 \label{sec:ppdp}
 
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth]{figures/pp_dp_comparison.pdf}
-    \vspace{-18pt}
-    \caption{MAPE results for all 4 model families under pipeline and data parallelism. Models with the largest parameter sizes in all 4 model families could not be compared for DP as they did not fit in GPU memory.}
-    \label{fig:mape_comparison_other}
-    \vspace{-9pt}
-\end{figure*}
+
 
 Figure~\ref{fig:mape_comparison_other} compares \sys{} against CodeCarbon and IrEne across all four model families and both 2-GPU and 4-GPU deployments under pipeline and data parallelism. We omit the Wilkins et al.\ baseline as it is consistently inferior to the other baselines (see Figure~\ref{fig:mape_comparison}). We also exclude configurations that do not fit in GPU memory (e.g., Llama-70B on 2 GPUs under pipeline parallelism, and several larger models under data parallelism).
 
@@ -339,14 +356,7 @@ Vicuna 13B                    & 93.24\% \\
 \label{sec:ablation_comm_modeling}
 To isolate the communication model's contribution, we replace predicted communication energy with an estimate based on observed average AllReduce power and collective duration, while retaining the model tree and compute predictors.
 
-\begin{figure*}[t]
-    \centering
-    \includegraphics[width=\textwidth]{figures/mape_all_model_families_no_comm_modeling.pdf}
-    \vspace{-18pt}
-    \caption{Ablation of explicit communication modeling. The ablated variant replaces \sys{}'s communication model with an average communication-power estimate for AllReduce events.}
-    \label{fig:ablation_comm_modeling}
-    \vspace{-9pt}
-\end{figure*}
+
 
 Figure~\ref{fig:ablation_comm_modeling} shows that \sys{} without explicit communication modeling incurs substantially higher prediction error of 34.0\% compared to \sys{}'s 12.9\%.
 The error increase is especially noticeable for larger models and 4-GPU settings, where AllReduce contributes a larger fraction of total energy.

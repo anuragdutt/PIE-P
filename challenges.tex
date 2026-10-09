@@ -1,11 +1,4 @@
-\begin{figure*}[t!]
-    \centering
-    \includegraphics[width=\textwidth]{figures/llm_energy_comparison.pdf}
-    \vspace{-18pt}
-    \caption{Energy consumption across models and GPU configurations (2- and 4-GPU runs use tensor parallelism). Bars show total model energy; lighter segments show AllReduce communication energy (\% shown) and darker segments show remaining computation energy. Missing bars denote cases where model did not fit in GPU memory.\anshul{do revisit space below figures and tables at the end as some have too much space and some are too tightly placed with text.}} 
-    \vspace{-9pt}
-    \label{fig:all_reduce_energy}
-\end{figure*}
+
 
 %Our goal is to develop a methodology for predicting the energy consumption of parallel LLM inference over multiple GPUs.
 There are three main parallelism strategies that are widely used for LLM inference, described below in increasing order of complexity.
