@@ -162,7 +162,7 @@ The resulting communication-module estimate is then composed with the compute-mo
 For compute modules, \sys{} records (i) resource-specific signals that summarize system/GPU activity, and (ii) model-specific descriptors extracted from the LLM configuration.
 
 \review{For compute modules, repeated offline measurements form the training dataset for the module-level regressors (\S\ref{ss:design-prediction}). Repeated communication measurements instead support calibration of the latency and power parameters under run-to-run synchronization variability.}
-We note that \sys{} performs all measurements \emph{offline}. 
+\review{We note that \sys{} performs all measurements \emph{offline}. For each target model and inference configuration, \sys{} profiles a single forward pass to collect the runtime and resource-utilization features required for energy prediction.} 
 As a result, during inference, \sys{} incurs \be{no additional measurement overhead}.
 
 \subsection{Multi-Level Regression}
