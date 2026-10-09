@@ -61,7 +61,7 @@ We omit the software-based estimator of Strubell et al.~\cite{strubell19} as it 
 
 
 %\aruna{This is very good, but just feels a little ChatGPT-ish, especually the first paragraph}
-\subsection{Summary of results}
+\subsection{Summary of Results}
 %{\smallskip\noindent\textbf{Summary of results.}
 \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
 \item \textbf{Tensor parallelism:} \sys{} obtains average MAPE of 17.6\% on A6000, 15.5\% on B40, and 16.8\% on the representative H200 evaluation.
@@ -78,7 +78,7 @@ We omit the software-based estimator of Strubell et al.~\cite{strubell19} as it 
 
 \subsection{Energy Prediction for Tensor Parallelism}
 \label{sec:model_prediction}
-Figures~\ref{fig:mape_comparison} and~\ref{fig:b40_mape_tensor_parallelism} show the mean absolute percentage error (MAPE) for \sys{} and the baselines under tensor parallelism on A6000 and B40 GPUs, respectively.
+Figures~\ref{fig:mape_comparison} and~\ref{fig:b40_mape_tensor_parallelism} show the MAPE for \sys{} and the baselines under tensor parallelism on A6000 and B40 GPUs, respectively.
 For each model family (e.g., Vicuna), we train a regressor on 70\% of module-level measurements across all variants (e.g., 7B), batch sizes, and input lengths, and evaluate on the remaining 30\%, following the training protocol in \S\ref{ss:esetup}.
 
 We see that \be{\sys{} consistently achieves the lowest MAPE in all cases} on the A6000 platform, with an average of 17.6\%.
@@ -91,7 +91,7 @@ The B40 results in Figure~\ref{fig:b40_mape_tensor_parallelism} show similar tre
 On closer inspection we observe that the \be{performance gap between \sys{} and the baselines widens with increasing parallelization}.
 This is because the energy contribution of AllReduce, due to its ring communication, increases with the number of GPUs; see Figure~\ref{fig:all_reduce_energy}.
 
-We also evaluate \sys{} on 2$\times$ NVIDIA H200 GPUs to test whether the same model-tree decomposition, communication model, and feature set remain useful on a substantially different GPU/interconnect platform. Across the evaluated model variants, model-level MAPE averages 16.8\%, comparable to the A6000 and B40 experiments. Table~\ref{tab:h200_model_results} gives the per-variant results. The larger Llama-70B configuration is the most difficult at 26.53\%, while most other variants remain in the 13-19\% range.
+We also evaluate \sys{} on 2$\times$ NVIDIA H200 GPUs to test whether the same model-tree decomposition, communication model, and feature set remain useful on a substantially different GPU/interconnect platform. Across the evaluated model variants, model-level MAPE averages 16.8\%, comparable to the A6000 and B40 experiments. Table~\ref{tab:h200_model_results} gives the per-variant results. The larger Llama 70B configuration is the most difficult at 26.53\%, while most other variants remain in the 13-19\% range.
 
 \begin{table}[t]
 \centering
@@ -307,7 +307,7 @@ In the rest of the subsections, for brevity, we report results for the A6000 har
 
 
 
-Figure~\ref{fig:mape_comparison_other} compares \sys{} against CodeCarbon and IrEne across all four model families and both 2-GPU and 4-GPU deployments under pipeline and data parallelism. We omit the Wilkins et al.\ baseline as it is consistently inferior to the other baselines (see Figure~\ref{fig:mape_comparison}). We also exclude configurations that do not fit in GPU memory (e.g., Llama-70B on 2 GPUs under pipeline parallelism, and several larger models under data parallelism).
+Figure~\ref{fig:mape_comparison_other} compares \sys{} against CodeCarbon and IrEne across all four model families and both 2-GPU and 4-GPU deployments under pipeline and data parallelism. We omit the Wilkins et al.\ baseline as it is consistently inferior to the other baselines (see Figure~\ref{fig:mape_comparison}). We also exclude configurations that do not fit in GPU memory (e.g., Llama 70B on 2 GPUs under pipeline parallelism, and several larger models under data parallelism).
 
 Across all evaluated configurations, \be{\sys{} achieves the lowest prediction error for both parallelism strategies}.
 Averaged over all points in Figure~\ref{fig:mape_comparison_other}, \sys{} attains MAPE of 12.2\% under pipeline parallelism and 10.8\% under data parallelism.
@@ -365,14 +365,14 @@ The error increase is especially noticeable for larger models and 4-GPU settings
 The key distinction is that \sys{} models communication as a first-class module whose features reflect the actual communication.
 The ablated configuration collapses these differences into a single average value, losing the structure needed to predict communication energy accurately.
 
-\subsection{Ablation Study: Model Tree methodology}
+\subsection{Ablation Study: Model Tree Methodology}
 \label{sec:ablation}
 To test the model-tree decomposition, we replace the module-specific predictors with one model-level regressor trained on aggregate features.
 
 We find that directly predicting total model energy leads to substantially higher errors: the MAPE increases to 61.2\% for Vicuna, 84.3\% for Mistral, 115.1\% for Llama, and 60.8\% for Qwen.
 This shows that energy prediction for parallel inference is not simply a model-level regression problem. Runtime features vary significantly across compute-heavy modules (e.g., Attention, MLP) and communication-heavy modules (e.g., AllReduce). Collapsing these effects into a single aggregate feature loses this structure and causes the predictor to mix heterogeneous sources of energy variation.
 
-\subsection{Use case: Inference time vs.\ energy for different levels of tensor parallelization}
+\subsection{Use Case: Inference Time vs.\ Energy for Different Levels of Tensor Parallelization}
 \label{sec:usecase}
 
 \begin{figure}[t]

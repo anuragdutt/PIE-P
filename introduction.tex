@@ -113,7 +113,7 @@ on three GPU platforms (A6000, B40, H200), and across
 tensor, pipeline, and data
 parallelism. % with tensor parallelism serving as the primary evaluation setting
 %because it introduces the most challenging communication and synchronization overheads.
-Under tensor-parallel evaluations, \sys{} achieves 15.5-17.6\% average model-level MAPE across A6000, B40, and H200. Average MAPE under pipeline and data parallelism is 12.2\% and 10.8\%, respectively.
+Under tensor-parallel evaluations, \sys{} achieves a model-level mean absolute percentage error (MAPE) of 15.5-17.6\% across A6000, B40, and H200. Average MAPE under pipeline and data parallelism is 12.2\% and 10.8\%, respectively.
 
 We compare \sys{} with CodeCarbon~\cite{codecarbon}, Wilkins et al.~\cite{wilkins2024offlineenergyoptimalllmserving}, IrEne~\cite{irene}, NVML-based regression~\cite{nvml}, NeuSight adapted to predict energy~\cite{neusight}, and IrEne augmented with historical communication-energy measurements. 
 %\aruna{We also compare \sys{} against Neusight~\cite{neusight}, which we modify to predict energy rather than its original latency objective, as well as an extended version of IrEne that accounts for network energy based on historical measurement data.} 

@@ -42,7 +42,7 @@ Concretely, \sys{} represents an LLM inference run as a hierarchical composition
 %\aruna{We need to describe what we do here for communication module. Also point out to the model tree abstraction shown in the figure}. 
 For inter-GPU communication, such as AllReduce operations, \sys{} adds a separate communication module to the model tree and records the data transferred between GPUs (see Figure~\ref{fig:piep_architecture}); this is then used to predict communication energy as discussed in \S\ref{ss:design-communication}.
 The model-tree decomposition follows the data dependencies along each forward execution path, where constituent modules execute in a sequential order.
-Concurrent kernel execution within a module is captured separately through an overlap-duration feature (Section~\ref{ss:design-features}).
+Concurrent kernel execution within a module is captured separately through an overlap-duration feature (\S\ref{ss:design-features}).
 %%%, rather than folding communication cost into nearby compute modules. 
 %%%This module represents inter-GPU collectives such as AllReduce and records the data transferred between GPUs, which is then used to predict communication energy as discussed in \S\ref{ss:design-communication}.
 %As shown in Figure~\ref{fig:piep_architecture}, the ``Communication'' module appears alongside compute modules such as Attention and MLP in the parallelism-aware model tree. 
