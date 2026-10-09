@@ -40,6 +40,8 @@ Finally, \sys{} builds a multi-level regressor to combine these contributions to
 Concretely, \sys{} represents an LLM inference run as a hierarchical composition of modules, where each Transformer block is decomposed into child modules (e.g., AllReduce, Attention, MLP, normalization, embedding, output). 
 %\aruna{We need to describe what we do here for communication module. Also point out to the model tree abstraction shown in the figure}. 
 For inter-GPU communication, such as AllReduce operations, \sys{} adds a separate communication module to the model tree and records the data transferred between GPUs (see Figure~\ref{fig:piep_architecture}); this is then used to predict communication energy as discussed in \S\ref{ss:design-communication}.
+\review{The model-tree decomposition follows the data dependencies along each forward execution path, where constituent modules execute in a largely sequential order.
+Concurrent kernel execution within a module is captured separately through its overlap-duration feature (Section~\ref{ss:design-features}).}
 %%%, rather than folding communication cost into nearby compute modules. 
 %%%This module represents inter-GPU collectives such as AllReduce and records the data transferred between GPUs, which is then used to predict communication energy as discussed in \S\ref{ss:design-communication}.
 %As shown in Figure~\ref{fig:piep_architecture}, the ``Communication'' module appears alongside compute modules such as Attention and MLP in the parallelism-aware model tree. 
@@ -86,6 +88,7 @@ GPU mem. clock (GHz) & \\
 Batch size & Sequence length\\
 \rowcolor{rowblue} FLOPs per token (billions) & Execution time (s)\\
 GPU energy NVML (Wh) & Number of GPUs\\
+\rowcolor{rowblue} \review{Intra-module kernel overlap (s)} & \\
 \midrule
 
 \rowcolor{rowblue}
@@ -108,7 +111,8 @@ Bytes transferred & Effective bandwidth\\
 \label{tab:features}
 \end{table}
 
-Table~\ref{tab:features} summarizes the complete feature set. Resource-utilization features capture system- and device-level activity during module execution, including CPU/GPU utilization, memory utilization, clock frequencies, and memory use. Execution features capture the workload configuration and observed execution cost, including batch size, sequence length, FLOPs per token, execution time, NVML-reported GPU energy, and GPU count. Model-structure features such as feed-forward dimension, Transformer-block count, hidden size, attention-head count, and key-value-head count expose architectural differences that determine tensor shapes and how work is divided across ranks. For communication modules, \sys{} additionally records the amount of data transferred and the effective bandwidth of each inter-GPU event.
+Table~\ref{tab:features} summarizes the complete feature set. Resource-utilization features capture system- and device-level activity during module execution, including CPU/GPU utilization, memory utilization, clock frequencies, and memory use. Execution features capture the workload configuration and observed execution cost, including batch size, sequence length, FLOPs per token, execution time, NVML-reported GPU energy, and GPU count. \review{We additionally include intra-module kernel overlap duration, measured as the time during which kernels belonging to the same module execute concurrently across GPU streams.
+This feature allows the module-level regressor to capture energy variations associated with concurrent kernel execution.} Model-structure features such as feed-forward dimension, Transformer-block count, hidden size, attention-head count, and key-value-head count expose architectural differences that determine tensor shapes and how work is divided across ranks. For communication modules, \sys{} additionally records the amount of data transferred and the effective bandwidth of each inter-GPU event.
 
 The feature representation is also designed to scale with GPU count. Instead of learning a separate set of coefficients for each physical GPU, \sys{} summarizes runtime features across participating GPUs using the mean, standard deviation, minimum, and maximum. The mean captures the overall activity level, while the spread and extrema expose imbalance and straggler behavior. These aggregates are combined with the static structural and communication features before training the module-specific regressors.
 
